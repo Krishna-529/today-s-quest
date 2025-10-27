@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Ultra-calm, muted color palette */
+    --background: 210 25% 98%;
+    --foreground: 220 8% 35%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 8% 35%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 8% 35%;
+
+    /* Soft, muted blue */
+    --primary: 210 35% 75%;
+    --primary-foreground: 220 8% 20%;
+
+    /* Gentle sage green */
+    --secondary: 150 25% 75%;
+    --secondary-foreground: 220 8% 30%;
+
+    --muted: 210 15% 95%;
+    --muted-foreground: 220 8% 55%;
+
+    --accent: 150 25% 80%;
+    --accent-foreground: 220 8% 30%;
+
+    --destructive: 0 35% 75%;
+    --destructive-foreground: 0 0% 20%;
+
+    /* Soft priority colors */
+    --priority-low: 150 30% 75%;
+    --priority-medium: 40 40% 75%;
+    --priority-high: 0 35% 75%;
+
+    --border: 220 10% 90%;
+    --input: 220 10% 92%;
+    --ring: 210 35% 75%;
+
+    --radius: 1rem;
+
+    /* Ultra-smooth transitions */
+    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Barely-there shadows */
+    --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.02);
+    --shadow-medium: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+}
+
+@layer utilities {
+  .task-enter {
+    animation: fadeSlideIn 0.3s ease-out;
+  }
+  
+  .task-exit {
+    animation: fadeSlideOut 0.2s ease-in;
+  }
+  
+  .task-complete {
+    animation: completeGlow 0.5s ease-out;
+  }
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeSlideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+}
+
+@keyframes completeGlow {
+  0% {
+    box-shadow: 0 0 0 0 hsl(var(--secondary) / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 8px hsl(var(--secondary) / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 hsl(var(--secondary) / 0);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

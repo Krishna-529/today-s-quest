@@ -1,0 +1,56 @@
+/* Rectangle 2 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 242px;
+height: 53px;
+
+background: #F5BA13;
+border: 3px solid rgba(46, 49, 30, 0.38);
+border-radius: 10px;
+
+
+/* Rectangle 3 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 242px;
+height: 53px;
+
+background: #C5C1B5;
+border: 3px solid rgba(46, 49, 30, 0.38);
+border-radius: 10px;
+
+
+/* thirsty_crow */
+
+position: absolute;
+width: 122px;
+height: 26px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 700;
+font-size: 20px;
+line-height: 24px;
+
+color: #211E1E;
+
+
+
+/* Logout */
+
+position: absolute;
+width: 138px;
+height: 28px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 700;
+font-size: 20px;
+line-height: 24px;
+
+color: #413636;
+
