@@ -1,22 +1,45 @@
-import { useState } from "react";
-import { Task, Project } from "@/types";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Task } from "@/types";
+import { useAuth } from "@/hooks/useAuth";
+import { useTasks } from "@/hooks/useTasks";
+import { useProjects } from "@/hooks/useProjects";
 import { Dashboard } from "@/components/Dashboard";
 import { TaskList } from "@/components/TaskList";
 import { TaskForm } from "@/components/TaskForm";
 import { CalendarView } from "@/components/CalendarView";
 import { ProjectsPanel } from "@/components/ProjectsPanel";
 import { Button } from "@/components/ui/button";
-import { Plus, ListTodo, Calendar as CalendarIcon } from "lucide-react";
+import { Plus, ListTodo, Calendar as CalendarIcon, LogOut } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
 
 const Index = () => {
-  const [tasks, setTasks] = useLocalStorage<Task[]>("tasks", []);
-  const [projects, setProjects] = useLocalStorage<Project[]>("projects", []);
+  const navigate = useNavigate();
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { tasks, isLoading: tasksLoading, addTask, updateTask, deleteTask, toggleTask } = useTasks();
+  const { projects, isLoading: projectsLoading, addProject, deleteProject } = useProjects();
+  
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
+
+  if (authLoading || tasksLoading || projectsLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   const filteredTasks = selectedProject
     ? tasks.filter((task) => task.projectId === selectedProject)
@@ -24,38 +47,12 @@ const Index = () => {
 
   const handleAddTask = (taskData: Partial<Task>) => {
     if (editingTask) {
-      setTasks(
-        tasks.map((task) =>
-          task.id === editingTask.id
-            ? { ...task, ...taskData }
-            : task
-        )
-      );
-      toast.success("Task updated successfully");
+      updateTask({ id: editingTask.id, ...taskData });
     } else {
-      const newTask: Task = {
-        id: Date.now().toString(),
-        title: taskData.title!,
-        description: taskData.description,
-        dueDate: taskData.dueDate,
-        priority: taskData.priority || "medium",
-        completed: false,
-        projectId: selectedProject || undefined,
-        createdAt: new Date().toISOString(),
-      };
-      setTasks([...tasks, newTask]);
-      toast.success("Task created successfully");
+      addTask({ ...taskData, projectId: selectedProject || undefined });
     }
     setIsFormOpen(false);
     setEditingTask(null);
-  };
-
-  const handleToggleTask = (id: string) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
   };
 
   const handleEditTask = (task: Task) => {
@@ -63,41 +60,34 @@ const Index = () => {
     setIsFormOpen(true);
   };
 
-  const handleDeleteTask = (id: string) => {
-    setTasks(tasks.filter((task) => task.id !== id));
-    toast.success("Task deleted");
-  };
-
-  const handleAddProject = (name: string, color: string) => {
-    const newProject: Project = {
-      id: Date.now().toString(),
-      name,
-      color,
-      createdAt: new Date().toISOString(),
-    };
-    setProjects([...projects, newProject]);
-    toast.success("Project created");
-  };
-
   const handleDeleteProject = (id: string) => {
-    setProjects(projects.filter((p) => p.id !== id));
-    setTasks(tasks.filter((task) => task.projectId !== id));
     if (selectedProject === id) {
       setSelectedProject(null);
     }
-    toast.success("Project deleted");
+    deleteProject(id);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
   };
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-12 max-w-7xl">
-        <header className="mb-12">
-          <h1 className="text-5xl font-bold text-foreground mb-3 tracking-tight">
-            Peaceful To-Do
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Organize your tasks with calm and clarity
-          </p>
+        <header className="mb-12 flex items-start justify-between">
+          <div>
+            <h1 className="text-5xl font-bold text-foreground mb-3 tracking-tight">
+              Peaceful To-Do
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Organize your tasks with calm and clarity
+            </p>
+          </div>
+          <Button variant="outline" onClick={handleSignOut}>
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
         </header>
 
         <Dashboard tasks={tasks} />
@@ -108,7 +98,7 @@ const Index = () => {
               projects={projects}
               selectedProject={selectedProject}
               onSelectProject={setSelectedProject}
-              onAddProject={handleAddProject}
+              onAddProject={(name, color) => addProject({ name, color })}
               onDeleteProject={handleDeleteProject}
             />
           </div>
@@ -136,18 +126,18 @@ const Index = () => {
               <TabsContent value="tasks" className="mt-0">
                 <TaskList
                   tasks={filteredTasks}
-                  onToggle={handleToggleTask}
+                  onToggle={toggleTask}
                   onEdit={handleEditTask}
-                  onDelete={handleDeleteTask}
+                  onDelete={deleteTask}
                 />
               </TabsContent>
 
               <TabsContent value="calendar" className="mt-0">
                 <CalendarView
                   tasks={filteredTasks}
-                  onToggle={handleToggleTask}
+                  onToggle={toggleTask}
                   onEdit={handleEditTask}
-                  onDelete={handleDeleteTask}
+                  onDelete={deleteTask}
                 />
               </TabsContent>
             </Tabs>
