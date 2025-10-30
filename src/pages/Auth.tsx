@@ -41,7 +41,7 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectToRedirectTo: import.meta.env.VITE_REDIRECT_URL,
+            emailRedirectTo: import.meta.env.VITE_REDIRECT_URL,
           },
         });
         if (error) throw error;
