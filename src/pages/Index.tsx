@@ -20,6 +20,7 @@ const Index = () => {
   const { projects, isLoading: projectsLoading, addProject, deleteProject } = useProjects();
   
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"today" | "all">("today");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
@@ -41,9 +42,24 @@ const Index = () => {
     return null;
   }
 
-  const filteredTasks = selectedProject
-    ? tasks.filter((task) => task.projectId === selectedProject)
-    : tasks;
+  const getFilteredTasks = () => {
+    let filtered = tasks;
+
+    // Filter by project if selected
+    if (selectedProject) {
+      filtered = filtered.filter((task) => task.projectId === selectedProject);
+    } 
+    // Otherwise filter by view mode
+    else if (viewMode === "today") {
+      const today = new Date().toISOString().split("T")[0];
+      filtered = filtered.filter((task) => task.dueDate === today);
+    }
+    // "all" mode shows all tasks (no additional filter)
+
+    return filtered;
+  };
+
+  const filteredTasks = getFilteredTasks();
 
   const handleAddTask = (taskData: Partial<Task>) => {
     if (editingTask) {
@@ -90,8 +106,6 @@ const Index = () => {
           </Button>
         </header>
 
-        <Dashboard tasks={tasks} />
-
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1">
             <ProjectsPanel
@@ -104,6 +118,24 @@ const Index = () => {
           </div>
 
           <div className="lg:col-span-3">
+            {/* View Mode Selector - Only show when no project is selected */}
+            {!selectedProject && (
+              <div className="mb-4 flex gap-2">
+                <Button
+                  variant={viewMode === "today" ? "default" : "outline"}
+                  onClick={() => setViewMode("today")}
+                >
+                  Today's Tasks
+                </Button>
+                <Button
+                  variant={viewMode === "all" ? "default" : "outline"}
+                  onClick={() => setViewMode("all")}
+                >
+                  All Tasks
+                </Button>
+              </div>
+            )}
+
             <Tabs defaultValue="tasks" className="w-full">
               <div className="flex items-center justify-between mb-4">
                 <TabsList>
@@ -142,6 +174,10 @@ const Index = () => {
               </TabsContent>
             </Tabs>
           </div>
+        </div>
+
+        <div className="mt-12">
+          <Dashboard tasks={tasks} />
         </div>
 
         <TaskForm
