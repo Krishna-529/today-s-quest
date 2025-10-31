@@ -23,7 +23,7 @@ export function useTasks() {
         dueDate: task.due_date,
         priority: task.priority as "low" | "medium" | "high",
         completed: task.completed,
-        projectId: task.project_id,
+        project_tags: task.project_tags,
         createdAt: task.created_at,
       })) as Task[];
     },
@@ -40,7 +40,7 @@ export function useTasks() {
         description: taskData.description,
         due_date: taskData.dueDate,
         priority: taskData.priority || "medium",
-        project_id: taskData.projectId,
+        project_tags: taskData.project_tags || [],
       });
 
       if (error) throw error;
@@ -64,7 +64,7 @@ export function useTasks() {
           due_date: taskData.dueDate,
           priority: taskData.priority,
           completed: taskData.completed,
-          project_id: taskData.projectId,
+          project_tags: taskData.project_tags,
         })
         .eq("id", id);
 

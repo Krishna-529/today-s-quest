@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Task, Priority } from "@/types";
+import { Task, Priority, Project } from "@/types";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
+import { Checkbox } from "./ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -23,13 +24,15 @@ interface TaskFormProps {
   onClose: () => void;
   onSubmit: (task: Partial<Task>) => void;
   editTask?: Task | null;
+  projects: Project[];
 }
 
-export const TaskForm = ({ open, onClose, onSubmit, editTask }: TaskFormProps) => {
+export const TaskForm = ({ open, onClose, onSubmit, editTask, projects }: TaskFormProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
   useEffect(() => {
     if (editTask) {
@@ -37,13 +40,23 @@ export const TaskForm = ({ open, onClose, onSubmit, editTask }: TaskFormProps) =
       setDescription(editTask.description || "");
       setDueDate(editTask.dueDate || "");
       setPriority(editTask.priority);
+      setSelectedProjects(editTask.project_tags || []);
     } else {
       setTitle("");
       setDescription("");
       setDueDate("");
       setPriority("medium");
+      setSelectedProjects([]);
     }
   }, [editTask]);
+
+  const toggleProject = (projectId: string) => {
+    setSelectedProjects(prev => 
+      prev.includes(projectId) 
+        ? prev.filter(id => id !== projectId)
+        : [...prev, projectId]
+    );
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,12 +67,14 @@ export const TaskForm = ({ open, onClose, onSubmit, editTask }: TaskFormProps) =
       description: description.trim() || undefined,
       dueDate: dueDate || undefined,
       priority,
+      project_tags: selectedProjects.length > 0 ? selectedProjects : undefined,
     });
 
     setTitle("");
     setDescription("");
     setDueDate("");
     setPriority("medium");
+    setSelectedProjects([]);
   };
 
   return (
@@ -116,6 +131,33 @@ export const TaskForm = ({ open, onClose, onSubmit, editTask }: TaskFormProps) =
               </Select>
             </div>
           </div>
+
+          {projects.length > 0 && (
+            <div className="space-y-2">
+              <Label>Project Tags (Optional)</Label>
+              <div className="border rounded-md p-3 space-y-2 max-h-40 overflow-y-auto">
+                {projects.map((project) => (
+                  <div key={project.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`project-${project.id}`}
+                      checked={selectedProjects.includes(project.id)}
+                      onCheckedChange={() => toggleProject(project.id)}
+                    />
+                    <label
+                      htmlFor={`project-${project.id}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
+                    >
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: project.color }}
+                      />
+                      {project.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-2 justify-end pt-4">
             <Button type="button" variant="outline" onClick={onClose}>

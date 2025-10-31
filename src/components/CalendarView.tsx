@@ -1,4 +1,4 @@
-import { Task } from "@/types";
+import { Task, Project } from "@/types";
 import { Calendar } from "./ui/calendar";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -9,9 +9,10 @@ interface CalendarViewProps {
   onToggle: (id: string) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  projects?: Project[];
 }
 
-export const CalendarView = ({ tasks, onToggle, onEdit, onDelete }: CalendarViewProps) => {
+export const CalendarView = ({ tasks, onToggle, onEdit, onDelete, projects }: CalendarViewProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
   const tasksWithDates = tasks.filter((task) => task.dueDate);
@@ -72,6 +73,7 @@ export const CalendarView = ({ tasks, onToggle, onEdit, onDelete }: CalendarView
                   onToggle={onToggle}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  projects={projects}
                 />
               ))}
             </div>

@@ -1,5 +1,5 @@
-import { Task, Priority } from "@/types";
-import { Check, Calendar, Edit2, Trash2 } from "lucide-react";
+import { Task, Priority, Project } from "@/types";
+import { Check, Calendar, Edit2, Trash2, Tag } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +8,7 @@ interface TaskItemProps {
   onToggle: (id: string) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  projects?: Project[];
 }
 
 const priorityColors: Record<Priority, string> = {
@@ -16,7 +17,9 @@ const priorityColors: Record<Priority, string> = {
   high: "bg-priority-high/20 text-priority-high border-priority-high/30",
 };
 
-export const TaskItem = ({ task, onToggle, onEdit, onDelete }: TaskItemProps) => {
+export const TaskItem = ({ task, onToggle, onEdit, onDelete, projects = [] }: TaskItemProps) => {
+  const taskProjects = projects.filter(p => task.project_tags?.includes(p.id));
+  
   return (
     <div
       className={cn(
@@ -65,6 +68,23 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete }: TaskItemProps) =>
             >
               {task.priority}
             </span>
+            {taskProjects.length > 0 && (
+              <div className="flex items-center gap-1 flex-wrap">
+                {taskProjects.map(project => (
+                  <span
+                    key={project.id}
+                    className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted"
+                  >
+                    <Tag className="w-3 h-3" />
+                    <span>{project.name}</span>
+                    <div 
+                      className="w-2 h-2 rounded-full" 
+                      style={{ backgroundColor: project.color }}
+                    />
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

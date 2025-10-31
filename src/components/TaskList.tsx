@@ -1,14 +1,16 @@
 import { Task } from "@/types";
 import { TaskItem } from "./TaskItem";
+import { Project } from "@/types";
 
 interface TaskListProps {
   tasks: Task[];
   onToggle: (id: string) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  projects?: Project[];
 }
 
-export const TaskList = ({ tasks, onToggle, onEdit, onDelete }: TaskListProps) => {
+export const TaskList = ({ tasks, onToggle, onEdit, onDelete, projects }: TaskListProps) => {
   if (tasks.length === 0) {
     return (
       <div className="text-center py-12">
@@ -26,6 +28,7 @@ export const TaskList = ({ tasks, onToggle, onEdit, onDelete }: TaskListProps) =
           onToggle={onToggle}
           onEdit={onEdit}
           onDelete={onDelete}
+          projects={projects}
         />
       ))}
     </div>

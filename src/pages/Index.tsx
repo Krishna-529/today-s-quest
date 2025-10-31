@@ -47,7 +47,7 @@ const Index = () => {
 
     // Filter by project if selected
     if (selectedProject) {
-      filtered = filtered.filter((task) => task.projectId === selectedProject);
+      filtered = filtered.filter((task) => task.project_tags?.includes(selectedProject));
     } 
     // Otherwise filter by view mode
     else if (viewMode === "today") {
@@ -65,7 +65,7 @@ const Index = () => {
     if (editingTask) {
       updateTask({ id: editingTask.id, ...taskData });
     } else {
-      addTask({ ...taskData, projectId: selectedProject || undefined });
+      addTask(taskData);
     }
     setIsFormOpen(false);
     setEditingTask(null);
@@ -161,6 +161,7 @@ const Index = () => {
                   onToggle={toggleTask}
                   onEdit={handleEditTask}
                   onDelete={deleteTask}
+                  projects={projects}
                 />
               </TabsContent>
 
@@ -170,6 +171,7 @@ const Index = () => {
                   onToggle={toggleTask}
                   onEdit={handleEditTask}
                   onDelete={deleteTask}
+                  projects={projects}
                 />
               </TabsContent>
             </Tabs>
@@ -188,6 +190,7 @@ const Index = () => {
           }}
           onSubmit={handleAddTask}
           editTask={editingTask}
+          projects={projects}
         />
       </div>
     </div>

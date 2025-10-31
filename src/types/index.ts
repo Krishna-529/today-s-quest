@@ -7,7 +7,7 @@ export interface Task {
   dueDate?: string;
   priority: Priority;
   completed: boolean;
-  projectId?: string;
+  project_tags?: string[];
   createdAt: string;
 }
 
