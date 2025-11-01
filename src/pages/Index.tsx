@@ -20,9 +20,11 @@ const Index = () => {
   const { projects, isLoading: projectsLoading, addProject, deleteProject } = useProjects();
   
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"today" | "all">("today");
+  const [viewMode, setViewMode] = useState<"today" | "tomorrow" | "all">("today");
+  const [completionFilter, setCompletionFilter] = useState<"all" | "completed" | "incomplete">("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [presetDate, setPresetDate] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -42,6 +44,12 @@ const Index = () => {
     return null;
   }
 
+  // Normalize date strings for comparison (handle both date and datetime formats)
+  const normalizeDate = (dateStr?: string) => {
+    if (!dateStr) return null;
+    return dateStr.split("T")[0];
+  };
+
   const getFilteredTasks = () => {
     let filtered = tasks;
 
@@ -52,9 +60,19 @@ const Index = () => {
     // Otherwise filter by view mode
     else if (viewMode === "today") {
       const today = new Date().toISOString().split("T")[0];
-      filtered = filtered.filter((task) => task.dueDate === today);
+      filtered = filtered.filter((task) => normalizeDate(task.dueDate) === today);
+    } else if (viewMode === "tomorrow") {
+      const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+      filtered = filtered.filter((task) => normalizeDate(task.dueDate) === tomorrow);
     }
     // "all" mode shows all tasks (no additional filter)
+
+    // Apply completion filter
+    if (completionFilter === "completed") {
+      filtered = filtered.filter((task) => task.completed);
+    } else if (completionFilter === "incomplete") {
+      filtered = filtered.filter((task) => !task.completed);
+    }
 
     return filtered;
   };
@@ -86,6 +104,11 @@ const Index = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
+  };
+
+  const handleAddTaskForDate = (date: string) => {
+    setPresetDate(date);
+    setIsFormOpen(true);
   };
 
   return (
@@ -128,6 +151,12 @@ const Index = () => {
                   Today's Tasks
                 </Button>
                 <Button
+                  variant={viewMode === "tomorrow" ? "default" : "outline"}
+                  onClick={() => setViewMode("tomorrow")}
+                >
+                  Tomorrow's Tasks
+                </Button>
+                <Button
                   variant={viewMode === "all" ? "default" : "outline"}
                   onClick={() => setViewMode("all")}
                 >
@@ -135,6 +164,31 @@ const Index = () => {
                 </Button>
               </div>
             )}
+
+            {/* Completion Filter */}
+            <div className="mb-4 flex gap-2">
+              <Button
+                size="sm"
+                variant={completionFilter === "all" ? "default" : "outline"}
+                onClick={() => setCompletionFilter("all")}
+              >
+                All
+              </Button>
+              <Button
+                size="sm"
+                variant={completionFilter === "incomplete" ? "default" : "outline"}
+                onClick={() => setCompletionFilter("incomplete")}
+              >
+                Incomplete
+              </Button>
+              <Button
+                size="sm"
+                variant={completionFilter === "completed" ? "default" : "outline"}
+                onClick={() => setCompletionFilter("completed")}
+              >
+                Completed
+              </Button>
+            </div>
 
             <Tabs defaultValue="tasks" className="w-full">
               <div className="flex items-center justify-between mb-4">
@@ -149,7 +203,19 @@ const Index = () => {
                   </TabsTrigger>
                 </TabsList>
 
-                <Button onClick={() => setIsFormOpen(true)}>
+                <Button onClick={() => {
+                  // Auto-set date based on current view mode
+                  if (!selectedProject) {
+                    if (viewMode === "today") {
+                      const today = new Date().toISOString().split("T")[0];
+                      setPresetDate(today);
+                    } else if (viewMode === "tomorrow") {
+                      const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+                      setPresetDate(tomorrow);
+                    }
+                  }
+                  setIsFormOpen(true);
+                }}>
                   <Plus className="w-4 h-4 mr-2" />
                   New Task
                 </Button>
@@ -179,7 +245,7 @@ const Index = () => {
         </div>
 
         <div className="mt-12">
-          <Dashboard tasks={tasks} />
+          <Dashboard tasks={tasks} onAddTaskForDate={handleAddTaskForDate} />
         </div>
 
         <TaskForm
@@ -187,10 +253,12 @@ const Index = () => {
           onClose={() => {
             setIsFormOpen(false);
             setEditingTask(null);
+            setPresetDate(null);
           }}
           onSubmit={handleAddTask}
           editTask={editingTask}
           projects={projects}
+          presetDate={presetDate}
         />
       </div>
     </div>

@@ -1,39 +1,56 @@
 import { Task } from "@/types";
-import { CheckCircle2, Circle, Clock } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Plus, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface DashboardProps {
   tasks: Task[];
+  onAddTaskForDate: (date: string) => void;
 }
 
-export const Dashboard = ({ tasks }: DashboardProps) => {
+export const Dashboard = ({ tasks, onAddTaskForDate }: DashboardProps) => {
   const today = new Date().toISOString().split("T")[0];
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
   
-  const todayTasks = tasks.filter(task => task.dueDate === today);
+  // Normalize date strings for comparison (handle both date and datetime formats)
+  const normalizeDate = (dateStr?: string) => {
+    if (!dateStr) return null;
+    return dateStr.split("T")[0];
+  };
+  
+  const todayTasks = tasks.filter(task => normalizeDate(task.dueDate) === today);
   const completedToday = todayTasks.filter(task => task.completed).length;
   const totalToday = todayTasks.length;
   const completionRate = totalToday > 0 ? (completedToday / totalToday) * 100 : 0;
 
+  const tomorrowTasks = tasks.filter(task => normalizeDate(task.dueDate) === tomorrow);
+  const completedTomorrow = tomorrowTasks.filter(task => task.completed).length;
+  const totalTomorrow = tomorrowTasks.length;
+  const tomorrowCompletionRate = totalTomorrow > 0 ? (completedTomorrow / totalTomorrow) * 100 : 0;
+
   const upcomingTasks = tasks.filter(
-    task => !task.completed && task.dueDate && task.dueDate > today
+    task => !task.completed && task.dueDate && normalizeDate(task.dueDate)! > tomorrow
   ).length;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-      <div className="bg-card rounded-xl p-6 shadow-soft border border-border">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <CheckCircle2 className="w-5 h-5 text-primary" />
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      {/* Today's Tasks Card */}
+      <div className="bg-card rounded-xl p-6 shadow-soft border-2 border-primary/20 hover:border-primary/40 transition-colors">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <CheckCircle2 className="w-5 h-5 text-primary" />
+            </div>
+            <h3 className="font-semibold text-foreground text-lg">Today</h3>
           </div>
-          <h3 className="font-medium text-foreground">Today's Progress</h3>
         </div>
-        <div className="flex items-end gap-2">
+        <div className="flex items-end gap-2 mb-4">
           <span className="text-3xl font-semibold text-foreground">
             {completedToday}
           </span>
           <span className="text-muted-foreground mb-1">/ {totalToday}</span>
         </div>
         {totalToday > 0 && (
-          <div className="mt-3">
+          <div className="mb-4">
             <div className="w-full bg-muted rounded-full h-2">
               <div
                 className="bg-primary h-2 rounded-full transition-all duration-500"
@@ -42,6 +59,52 @@ export const Dashboard = ({ tasks }: DashboardProps) => {
             </div>
           </div>
         )}
+        <Button 
+          size="sm" 
+          variant="outline" 
+          className="w-full" 
+          onClick={() => onAddTaskForDate(today)}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Task for Today
+        </Button>
+      </div>
+
+      {/* Tomorrow's Tasks Card */}
+      <div className="bg-card rounded-xl p-6 shadow-soft border-2 border-accent/20 hover:border-accent/40 transition-colors">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-accent/10 rounded-lg">
+              <Calendar className="w-5 h-5 text-accent" />
+            </div>
+            <h3 className="font-semibold text-foreground text-lg">Tomorrow</h3>
+          </div>
+        </div>
+        <div className="flex items-end gap-2 mb-4">
+          <span className="text-3xl font-semibold text-foreground">
+            {completedTomorrow}
+          </span>
+          <span className="text-muted-foreground mb-1">/ {totalTomorrow}</span>
+        </div>
+        {totalTomorrow > 0 && (
+          <div className="mb-4">
+            <div className="w-full bg-muted rounded-full h-2">
+              <div
+                className="bg-accent h-2 rounded-full transition-all duration-500"
+                style={{ width: `${tomorrowCompletionRate}%` }}
+              />
+            </div>
+          </div>
+        )}
+        <Button 
+          size="sm" 
+          variant="outline" 
+          className="w-full" 
+          onClick={() => onAddTaskForDate(tomorrow)}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Task for Tomorrow
+        </Button>
       </div>
 
       <div className="bg-card rounded-xl p-6 shadow-soft border border-border">

@@ -25,9 +25,10 @@ interface TaskFormProps {
   onSubmit: (task: Partial<Task>) => void;
   editTask?: Task | null;
   projects: Project[];
+  presetDate?: string | null;
 }
 
-export const TaskForm = ({ open, onClose, onSubmit, editTask, projects }: TaskFormProps) => {
+export const TaskForm = ({ open, onClose, onSubmit, editTask, projects, presetDate }: TaskFormProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -44,11 +45,11 @@ export const TaskForm = ({ open, onClose, onSubmit, editTask, projects }: TaskFo
     } else {
       setTitle("");
       setDescription("");
-      setDueDate("");
+      setDueDate(presetDate || "");
       setPriority("medium");
       setSelectedProjects([]);
     }
-  }, [editTask]);
+  }, [editTask, presetDate]);
 
   const toggleProject = (projectId: string) => {
     setSelectedProjects(prev => 
