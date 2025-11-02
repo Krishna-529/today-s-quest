@@ -43,10 +43,10 @@ export const ProjectsPanel = ({
   };
 
   return (
-    <div className="bg-card rounded-2xl p-6 shadow-soft border border-border">
+    <div className="bg-card rounded-2xl p-4 md:p-6 shadow-soft border border-border">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-foreground flex items-center gap-2">
-          <Folder className="w-4 h-4" />
+        <h3 className="text-sm md:text-base font-semibold text-foreground flex items-center gap-2">
+          <Folder className="w-3 h-3 md:w-4 md:h-4" />
           Projects
         </h3>
         <Button
@@ -54,7 +54,7 @@ export const ProjectsPanel = ({
           variant="ghost"
           onClick={() => setIsAdding(!isAdding)}
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3 h-3 md:w-4 md:h-4" />
         </Button>
       </div>
 
@@ -101,7 +101,7 @@ export const ProjectsPanel = ({
         <button
           onClick={() => onSelectProject(null)}
           className={cn(
-            "w-full text-left px-3 py-2 rounded-lg transition-colors",
+            "w-full text-left px-2 md:px-3 py-1.5 md:py-2 rounded-lg transition-colors text-xs md:text-sm",
             selectedProject === null
               ? "bg-primary/10 text-primary"
               : "hover:bg-muted"
@@ -114,7 +114,7 @@ export const ProjectsPanel = ({
           <div
             key={project.id}
             className={cn(
-              "group flex items-center justify-between px-3 py-2 rounded-lg transition-colors",
+              "group flex items-center justify-between px-2 md:px-3 py-1.5 md:py-2 rounded-lg transition-colors",
               selectedProject === project.id
                 ? "bg-primary/10"
                 : "hover:bg-muted"
@@ -125,18 +125,18 @@ export const ProjectsPanel = ({
               className="flex items-center gap-2 flex-1 text-left"
             >
               <div
-                className="w-3 h-3 rounded-full"
+                className="w-2 h-2 md:w-3 md:h-3 rounded-full"
                 style={{ backgroundColor: project.color }}
               />
-              <span className="text-sm">{project.name}</span>
+              <span className="text-xs md:text-sm truncate">{project.name}</span>
             </button>
             <Button
               size="icon"
               variant="ghost"
-              className="h-6 w-6 opacity-0 group-hover:opacity-100"
+              className="h-5 w-5 md:h-6 md:w-6 opacity-0 group-hover:opacity-100"
               onClick={() => onDeleteProject(project.id)}
             >
-              <Trash2 className="w-3 h-3" />
+              <Trash2 className="w-2.5 h-2.5 md:w-3 md:h-3" />
             </Button>
           </div>
         ))}

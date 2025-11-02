@@ -5,13 +5,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTasks } from "@/hooks/useTasks";
 import { useProjects } from "@/hooks/useProjects";
 import { Dashboard } from "@/components/Dashboard";
-import { TaskList } from "@/components/TaskList";
+import { DraggableTaskList } from "@/components/DraggableTaskList";
 import { TaskForm } from "@/components/TaskForm";
 import { CalendarView } from "@/components/CalendarView";
 import { ProjectsPanel } from "@/components/ProjectsPanel";
 import { Button } from "@/components/ui/button";
 import { Plus, ListTodo, Calendar as CalendarIcon, LogOut } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getISTDateString, normalizeDate } from "@/lib/dateUtils";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ const Index = () => {
   const { projects, isLoading: projectsLoading, addProject, deleteProject } = useProjects();
   
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"today" | "tomorrow" | "all">("today");
+  const [viewMode, setViewMode] = useState<"today" | "tomorrow" | "all" | "upcoming">("today");
   const [completionFilter, setCompletionFilter] = useState<"all" | "completed" | "incomplete">("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -44,12 +45,6 @@ const Index = () => {
     return null;
   }
 
-  // Normalize date strings for comparison (handle both date and datetime formats)
-  const normalizeDate = (dateStr?: string) => {
-    if (!dateStr) return null;
-    return dateStr.split("T")[0];
-  };
-
   const getFilteredTasks = () => {
     let filtered = tasks;
 
@@ -59,11 +54,14 @@ const Index = () => {
     } 
     // Otherwise filter by view mode
     else if (viewMode === "today") {
-      const today = new Date().toISOString().split("T")[0];
+      const today = getISTDateString();
       filtered = filtered.filter((task) => normalizeDate(task.dueDate) === today);
     } else if (viewMode === "tomorrow") {
-      const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+      const tomorrow = new Date(new Date(getISTDateString()).getTime() + 86400000).toISOString().split("T")[0];
       filtered = filtered.filter((task) => normalizeDate(task.dueDate) === tomorrow);
+    } else if (viewMode === "upcoming") {
+      const tomorrow = new Date(new Date(getISTDateString()).getTime() + 86400000).toISOString().split("T")[0];
+      filtered = filtered.filter((task) => task.dueDate && normalizeDate(task.dueDate)! > tomorrow);
     }
     // "all" mode shows all tasks (no additional filter)
 
@@ -95,6 +93,12 @@ const Index = () => {
   };
 
   const handleDeleteProject = (id: string) => {
+    // Delete tasks that only have this project
+    const tasksToDelete = tasks.filter(task => 
+      task.project_tags?.length === 1 && task.project_tags[0] === id
+    );
+    tasksToDelete.forEach(task => deleteTask(task.id));
+    
     if (selectedProject === id) {
       setSelectedProject(null);
     }
@@ -113,23 +117,23 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-12 max-w-7xl">
-        <header className="mb-12 flex items-start justify-between">
+      <div className="container mx-auto px-4 py-4 md:py-12 max-w-7xl">
+        <header className="mb-4 md:mb-12 flex items-start justify-between">
           <div>
-            <h1 className="text-5xl font-bold text-foreground mb-3 tracking-tight">
+            <h1 className="text-2xl md:text-5xl font-bold text-foreground mb-1 md:mb-3 tracking-tight">
               Peaceful To-Do
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-sm md:text-lg text-muted-foreground">
               Organize your tasks with calm and clarity
             </p>
           </div>
-          <Button variant="outline" onClick={handleSignOut}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
+          <Button variant="outline" size="sm" onClick={handleSignOut} className="md:h-10">
+            <LogOut className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+            <span className="hidden md:inline">Sign Out</span>
           </Button>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-8">
           <div className="lg:col-span-1">
             <ProjectsPanel
               projects={projects}
@@ -143,24 +147,34 @@ const Index = () => {
           <div className="lg:col-span-3">
             {/* View Mode Selector - Only show when no project is selected */}
             {!selectedProject && (
-              <div className="mb-4 flex gap-2">
+              <div className="mb-4 flex gap-2 flex-wrap">
                 <Button
+                  size="sm"
                   variant={viewMode === "today" ? "default" : "outline"}
                   onClick={() => setViewMode("today")}
                 >
-                  Today's Tasks
+                  Today
                 </Button>
                 <Button
+                  size="sm"
                   variant={viewMode === "tomorrow" ? "default" : "outline"}
                   onClick={() => setViewMode("tomorrow")}
                 >
-                  Tomorrow's Tasks
+                  Tomorrow
                 </Button>
                 <Button
+                  size="sm"
+                  variant={viewMode === "upcoming" ? "default" : "outline"}
+                  onClick={() => setViewMode("upcoming")}
+                >
+                  Upcoming
+                </Button>
+                <Button
+                  size="sm"
                   variant={viewMode === "all" ? "default" : "outline"}
                   onClick={() => setViewMode("all")}
                 >
-                  All Tasks
+                  All
                 </Button>
               </div>
             )}
@@ -207,10 +221,10 @@ const Index = () => {
                   // Auto-set date based on current view mode
                   if (!selectedProject) {
                     if (viewMode === "today") {
-                      const today = new Date().toISOString().split("T")[0];
+                      const today = getISTDateString();
                       setPresetDate(today);
                     } else if (viewMode === "tomorrow") {
-                      const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+                      const tomorrow = new Date(new Date(getISTDateString()).getTime() + 86400000).toISOString().split("T")[0];
                       setPresetDate(tomorrow);
                     }
                   }
@@ -222,11 +236,12 @@ const Index = () => {
               </div>
 
               <TabsContent value="tasks" className="mt-0">
-                <TaskList
+                <DraggableTaskList
                   tasks={filteredTasks}
                   onToggle={toggleTask}
                   onEdit={handleEditTask}
                   onDelete={deleteTask}
+                  onReorder={() => {}} // Task order is managed by created_at
                   projects={projects}
                 />
               </TabsContent>
@@ -244,8 +259,12 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="mt-12">
-          <Dashboard tasks={tasks} onAddTaskForDate={handleAddTaskForDate} />
+        <div className="mt-8 md:mt-12">
+          <Dashboard 
+            tasks={tasks} 
+            onAddTaskForDate={handleAddTaskForDate}
+            onViewUpcoming={() => setViewMode("upcoming")}
+          />
         </div>
 
         <TaskForm

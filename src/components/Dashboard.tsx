@@ -1,22 +1,19 @@
 import { Task } from "@/types";
 import { CheckCircle2, Circle, Clock, Plus, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getISTDateString, normalizeDate } from "@/lib/dateUtils";
 
 interface DashboardProps {
   tasks: Task[];
   onAddTaskForDate: (date: string) => void;
+  onViewUpcoming?: () => void;
 }
 
-export const Dashboard = ({ tasks, onAddTaskForDate }: DashboardProps) => {
-  const today = new Date().toISOString().split("T")[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+export const Dashboard = ({ tasks, onAddTaskForDate, onViewUpcoming }: DashboardProps) => {
+  const today = getISTDateString();
+  const tomorrow = new Date(new Date(today).getTime() + 86400000).toISOString().split("T")[0];
   
   // Normalize date strings for comparison (handle both date and datetime formats)
-  const normalizeDate = (dateStr?: string) => {
-    if (!dateStr) return null;
-    return dateStr.split("T")[0];
-  };
-  
   const todayTasks = tasks.filter(task => normalizeDate(task.dueDate) === today);
   const completedToday = todayTasks.filter(task => task.completed).length;
   const totalToday = todayTasks.length;
@@ -122,7 +119,10 @@ export const Dashboard = ({ tasks, onAddTaskForDate }: DashboardProps) => {
         </div>
       </div>
 
-      <div className="bg-card rounded-xl p-6 shadow-soft border border-border">
+      <div 
+        className="bg-card rounded-xl p-6 shadow-soft border border-border cursor-pointer hover:border-accent/40 transition-colors"
+        onClick={onViewUpcoming}
+      >
         <div className="flex items-center gap-3 mb-2">
           <div className="p-2 bg-accent/10 rounded-lg">
             <Clock className="w-5 h-5 text-accent" />
