@@ -13,12 +13,15 @@ import { Button } from "@/components/ui/button";
 import { Plus, ListTodo, Calendar as CalendarIcon, LogOut } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getISTDateString, normalizeDate } from "@/lib/dateUtils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileProjectsDropdown } from "@/components/MobileProjectsDropdown";
 
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
   const { tasks, isLoading: tasksLoading, addTask, updateTask, deleteTask, toggleTask } = useTasks();
   const { projects, isLoading: projectsLoading, addProject, deleteProject } = useProjects();
+  const isMobile = useIsMobile();
   
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"today" | "tomorrow" | "all" | "upcoming">("today");
@@ -32,6 +35,27 @@ const Index = () => {
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
+
+  // Auto-delete overdue projects and their tasks
+  useEffect(() => {
+    const today = getISTDateString();
+    projects.forEach(project => {
+      // Check if any tasks in this project have passed due dates
+      const projectTasks = tasks.filter(task => task.project_tags?.includes(project.id));
+      const hasOverdueTasks = projectTasks.some(task => 
+        task.dueDate && normalizeDate(task.dueDate)! < today && !task.completed
+      );
+      
+      if (hasOverdueTasks) {
+        // Delete overdue incomplete tasks
+        projectTasks.forEach(task => {
+          if (task.dueDate && normalizeDate(task.dueDate)! < today && !task.completed) {
+            deleteTask(task.id);
+          }
+        });
+      }
+    });
+  }, [tasks, projects, deleteTask]);
 
   if (authLoading || tasksLoading || projectsLoading) {
     return (
@@ -117,13 +141,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-4 md:py-12 max-w-7xl">
-        <header className="mb-4 md:mb-12 flex items-start justify-between">
+      <div className="container mx-auto px-4 py-2 md:py-12 max-w-7xl">
+        <header className="mb-2 md:mb-12 flex items-start justify-between">
           <div>
-            <h1 className="text-2xl md:text-5xl font-bold text-foreground mb-1 md:mb-3 tracking-tight">
-              Peaceful To-Do
+            <h1 className="text-xl md:text-5xl font-bold text-foreground mb-0.5 md:mb-3 tracking-tight">
+              Every minute counts
             </h1>
-            <p className="text-sm md:text-lg text-muted-foreground">
+            <p className="text-xs md:text-lg text-muted-foreground">
               Organize your tasks with calm and clarity
             </p>
           </div>
@@ -133,9 +157,10 @@ const Index = () => {
           </Button>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-8">
-          <div className="lg:col-span-1">
-            <ProjectsPanel
+        {/* Mobile Projects Dropdown */}
+        {isMobile && (
+          <div className="mb-3">
+            <MobileProjectsDropdown
               projects={projects}
               selectedProject={selectedProject}
               onSelectProject={setSelectedProject}
@@ -143,8 +168,23 @@ const Index = () => {
               onDeleteProject={handleDeleteProject}
             />
           </div>
+        )}
 
-          <div className="lg:col-span-3">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-8">
+          {/* Desktop Projects Panel */}
+          {!isMobile && (
+            <div className="lg:col-span-1">
+              <ProjectsPanel
+                projects={projects}
+                selectedProject={selectedProject}
+                onSelectProject={setSelectedProject}
+                onAddProject={(name, color) => addProject({ name, color })}
+                onDeleteProject={handleDeleteProject}
+              />
+            </div>
+          )}
+
+          <div className={isMobile ? "col-span-1" : "lg:col-span-3"}>
             {/* View Mode Selector - Only show when no project is selected */}
             {!selectedProject && (
               <div className="mb-4 flex gap-2 flex-wrap">

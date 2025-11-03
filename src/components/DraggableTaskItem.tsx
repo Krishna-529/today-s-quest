@@ -4,6 +4,7 @@ import { TaskItem } from './TaskItem';
 import { Task } from '@/types';
 import { Project } from '@/types';
 import { GripVertical } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DraggableTaskItemProps {
   task: Task;
@@ -20,6 +21,7 @@ export const DraggableTaskItem = ({
   onDelete,
   projects,
 }: DraggableTaskItemProps) => {
+  const isMobile = useIsMobile();
   const {
     attributes,
     listeners,
@@ -37,15 +39,17 @@ export const DraggableTaskItem = ({
 
   return (
     <div ref={setNodeRef} style={style} className="relative group">
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 -ml-8 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          {...attributes}
-          {...listeners}
-          className="p-1 hover:bg-muted rounded cursor-grab active:cursor-grabbing"
-        >
-          <GripVertical className="w-4 h-4 text-muted-foreground" />
-        </button>
-      </div>
+      {!isMobile && (
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 -ml-8 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            {...attributes}
+            {...listeners}
+            className="p-1 hover:bg-muted rounded cursor-grab active:cursor-grabbing"
+          >
+            <GripVertical className="w-4 h-4 text-muted-foreground" />
+          </button>
+        </div>
+      )}
       <TaskItem
         task={task}
         onToggle={onToggle}
