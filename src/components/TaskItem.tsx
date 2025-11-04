@@ -19,23 +19,24 @@ const priorityColors: Record<Priority, string> = {
 
 export const TaskItem = ({ task, onToggle, onEdit, onDelete, projects = [] }: TaskItemProps) => {
   const taskProjects = projects.filter(p => task.project_tags?.includes(p.id));
-  
+
   return (
     <div
       className={cn(
-        "group bg-card rounded-2xl p-6 shadow-soft border border-border transition-all duration-500 hover:shadow-hover task-enter",
+        "group bg-card rounded-2xl p-6 shadow-soft border border-border transition-all duration-500 hover:shadow-hover task-enter select-none",
         task.completed && "opacity-50"
       )}
     >
       <div className="flex items-start gap-3">
-       <button
+        <button
+          type="button"
           onClick={(e) => {
-            e.stopPropagation(); // prevent parent from catching the event
-            e.preventDefault();  // prevents focus/selection behavior on mobile
+            e.stopPropagation();
+            e.preventDefault(); // ✅ prevents text selection & drag start on mobile
             onToggle(task.id);
           }}
           className={cn(
-            "mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300",
+            "mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300 touch-none",
             task.completed
               ? "bg-secondary border-secondary"
               : "border-muted-foreground/20 hover:border-secondary/50"
@@ -56,7 +57,7 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete, projects = [] }: Ta
           {task.description && (
             <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
           )}
-          
+
           <div className="flex flex-wrap items-center gap-2 mt-2">
             {task.dueDate && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -81,8 +82,8 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete, projects = [] }: Ta
                   >
                     <Tag className="w-3 h-3" />
                     <span>{project.name}</span>
-                    <div 
-                      className="w-2 h-2 rounded-full" 
+                    <div
+                      className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: project.color }}
                     />
                   </span>
@@ -97,7 +98,11 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete, projects = [] }: Ta
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => onEdit(task)}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onEdit(task);
+            }}
           >
             <Edit2 className="w-4 h-4" />
           </Button>
@@ -105,7 +110,11 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete, projects = [] }: Ta
             variant="ghost"
             size="icon"
             className="h-8 w-8 hover:text-destructive"
-            onClick={() => onDelete(task.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onDelete(task.id);
+            }}
           >
             <Trash2 className="w-4 h-4" />
           </Button>

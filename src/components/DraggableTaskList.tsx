@@ -1,5 +1,4 @@
-import { Task } from "@/types";
-import { Project } from "@/types";
+import { Task, Project } from "@/types";
 import { DraggableTaskItem } from "./DraggableTaskItem";
 import {
   DndContext,
@@ -9,13 +8,13 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
+} from "@dnd-kit/sortable";
 
 interface DraggableTaskListProps {
   tasks: Task[];
@@ -35,7 +34,11 @@ export const DraggableTaskList = ({
   projects,
 }: DraggableTaskListProps) => {
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 10, // ✅ prevents accidental drags on mobile tap
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -43,12 +46,10 @@ export const DraggableTaskList = ({
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-
     if (over && active.id !== over.id) {
-      const oldIndex = tasks.findIndex((task) => task.id === active.id);
-      const newIndex = tasks.findIndex((task) => task.id === over.id);
-      const newTasks = arrayMove(tasks, oldIndex, newIndex);
-      onReorder(newTasks);
+      const oldIndex = tasks.findIndex((t) => t.id === active.id);
+      const newIndex = tasks.findIndex((t) => t.id === over.id);
+      onReorder(arrayMove(tasks, oldIndex, newIndex));
     }
   };
 
@@ -66,11 +67,8 @@ export const DraggableTaskList = ({
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <SortableContext
-        items={tasks.map((task) => task.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        <div className="space-y-3">
+      <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+        <div className="space-y-3 select-none">
           {tasks.map((task) => (
             <DraggableTaskItem
               key={task.id}
