@@ -31,7 +31,7 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete, projects = [] }: Ta
         <button
           onClick={() => onToggle(task.id)}
           className={cn(
-            "mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300",
+            "relative z-10 mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300",
             task.completed
               ? "bg-secondary border-secondary"
               : "border-muted-foreground/20 hover:border-secondary/50"

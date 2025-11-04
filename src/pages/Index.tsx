@@ -38,16 +38,28 @@ const Index = () => {
   }, [user, authLoading, navigate]);
 
   // Auto-delete tasks with passed due dates
-  useEffect(() => {
-    const today = getISTDateString();
-    
-    tasks.forEach(task => {
-      // Delete incomplete tasks whose due date has passed
-      if (task.dueDate && normalizeDate(task.dueDate)! < today && !task.completed) {
-        deleteTask(task.id);
-      }
-    });
-  }, [tasks, deleteTask]);
+  // Auto-delete tasks with passed due dates (run only after tasks load)
+useEffect(() => {
+  if (tasksLoading || !tasks.length) return; // wait until tasks are fetched
+
+  // Get current date in IST (Indian Standard Time)
+  const today = new Date();
+  const utcOffset = today.getTimezoneOffset() * 60000;
+  const istTime = new Date(today.getTime() + (5.5 * 60 * 60 * 1000)); // UTC + 5:30
+  const todayString = istTime.toISOString().split("T")[0]; // "YYYY-MM-DD"
+
+  const overdueTasks = tasks.filter((task) => {
+    if (!task.dueDate || task.completed) return false;
+    const taskDate = normalizeDate(task.dueDate);
+    return taskDate < todayString; // compare in IST date string format
+  });
+
+  if (overdueTasks.length > 0) {
+    overdueTasks.forEach((task) => deleteTask(task.id));
+  }
+}, [tasksLoading, tasks]);
+
+
 
   if (authLoading || tasksLoading || projectsLoading) {
     return (
