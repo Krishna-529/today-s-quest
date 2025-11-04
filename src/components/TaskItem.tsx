@@ -28,10 +28,14 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete, projects = [] }: Ta
       )}
     >
       <div className="flex items-start gap-3">
-        <button
-          onClick={() => onToggle(task.id)}
+       <button
+          onClick={(e) => {
+            e.stopPropagation(); // prevent parent from catching the event
+            e.preventDefault();  // prevents focus/selection behavior on mobile
+            onToggle(task.id);
+          }}
           className={cn(
-            "relative z-10 mt-1 w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-all duration-300",
+            "mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300",
             task.completed
               ? "bg-secondary border-secondary"
               : "border-muted-foreground/20 hover:border-secondary/50"
