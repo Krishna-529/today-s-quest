@@ -3,6 +3,7 @@ import { Calendar } from "./ui/calendar";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { TaskItem } from "./TaskItem";
+import { normalizeDate } from "@/lib/dateUtils";
 
 interface CalendarViewProps {
   tasks: Task[];
@@ -17,12 +18,12 @@ export const CalendarView = ({ tasks, onToggle, onEdit, onDelete, projects }: Ca
 
   const tasksWithDates = tasks.filter((task) => task.dueDate);
   
-  const selectedDateString = selectedDate?.toISOString().split("T")[0];
+  const selectedDateString = normalizeDate(selectedDate?.toISOString());
   const tasksForSelectedDate = tasksWithDates.filter(
-    (task) => task.dueDate === selectedDateString
+    (task) => normalizeDate(task.dueDate) === selectedDateString
   );
 
-  const datesWithTasks = new Set(tasksWithDates.map((task) => task.dueDate));
+  const datesWithTasks = new Set(tasksWithDates.map((task) => normalizeDate(task.dueDate)));
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -38,7 +39,7 @@ export const CalendarView = ({ tasks, onToggle, onEdit, onDelete, projects }: Ca
             className="rounded-md border pointer-events-auto"
             modifiers={{
               hasTask: (date) => {
-                const dateString = date.toISOString().split("T")[0];
+                const dateString = normalizeDate(date.toISOString());
                 return datesWithTasks.has(dateString);
               },
             }}

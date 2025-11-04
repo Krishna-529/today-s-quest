@@ -29,6 +29,7 @@ const Index = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [presetDate, setPresetDate] = useState<string | null>(null);
+  const [taskOrderMap, setTaskOrderMap] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -36,26 +37,17 @@ const Index = () => {
     }
   }, [user, authLoading, navigate]);
 
-  // Auto-delete overdue projects and their tasks
+  // Auto-delete tasks with passed due dates
   useEffect(() => {
     const today = getISTDateString();
-    projects.forEach(project => {
-      // Check if any tasks in this project have passed due dates
-      const projectTasks = tasks.filter(task => task.project_tags?.includes(project.id));
-      const hasOverdueTasks = projectTasks.some(task => 
-        task.dueDate && normalizeDate(task.dueDate)! < today && !task.completed
-      );
-      
-      if (hasOverdueTasks) {
-        // Delete overdue incomplete tasks
-        projectTasks.forEach(task => {
-          if (task.dueDate && normalizeDate(task.dueDate)! < today && !task.completed) {
-            deleteTask(task.id);
-          }
-        });
+    
+    tasks.forEach(task => {
+      // Delete incomplete tasks whose due date has passed
+      if (task.dueDate && normalizeDate(task.dueDate)! < today && !task.completed) {
+        deleteTask(task.id);
       }
     });
-  }, [tasks, projects, deleteTask]);
+  }, [tasks, deleteTask]);
 
   if (authLoading || tasksLoading || projectsLoading) {
     return (
@@ -94,6 +86,27 @@ const Index = () => {
       filtered = filtered.filter((task) => task.completed);
     } else if (completionFilter === "incomplete") {
       filtered = filtered.filter((task) => !task.completed);
+    }
+
+    // Apply manual order if exists for current context
+    const orderKey = selectedProject
+      ? `project:${selectedProject}|${completionFilter}`
+      : `view:${viewMode}|${completionFilter}`;
+    const orderedIds = taskOrderMap[orderKey];
+    if (orderedIds && orderedIds.length) {
+      const indexMap = new Map(orderedIds.map((id, i) => [id, i]));
+      filtered = filtered
+        .slice()
+        .sort((a, b) => {
+          const ia = indexMap.has(a.id) ? (indexMap.get(a.id) as number) : Number.POSITIVE_INFINITY;
+          const ib = indexMap.has(b.id) ? (indexMap.get(b.id) as number) : Number.POSITIVE_INFINITY;
+          return ia - ib;
+        });
+    } else {
+      // Default sort: oldest tasks first (ascending by createdAt)
+      filtered = filtered
+        .slice()
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     }
 
     return filtered;
@@ -281,7 +294,12 @@ const Index = () => {
                   onToggle={toggleTask}
                   onEdit={handleEditTask}
                   onDelete={deleteTask}
-                  onReorder={() => {}} // Task order is managed by created_at
+                  onReorder={(newTasks) => {
+                    const key = selectedProject
+                      ? `project:${selectedProject}|${completionFilter}`
+                      : `view:${viewMode}|${completionFilter}`;
+                    setTaskOrderMap((prev) => ({ ...prev, [key]: newTasks.map((t) => t.id) }));
+                  }}
                   projects={projects}
                 />
               </TabsContent>
