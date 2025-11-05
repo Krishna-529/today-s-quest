@@ -47,8 +47,9 @@ const Auth = () => {
         if (error) throw error;
         toast.success("Account created! Please check your email to confirm.");
       }
-    } catch (error: any) {
-      toast.error(error.message || "An error occurred");
+    } catch (error: unknown) {
+      const msg = (error as Error)?.message ?? String(error);
+      toast.error(msg || "An error occurred");
     } finally {
       setLoading(false);
     }
@@ -63,8 +64,9 @@ const Auth = () => {
         },
       });
       if (error) throw error;
-    } catch (error: any) {
-      toast.error(error.message || "An error occurred");
+    } catch (error: unknown) {
+      const msg = (error as Error)?.message ?? String(error);
+      toast.error(msg || "An error occurred");
     }
   };
 

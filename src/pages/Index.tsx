@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Task } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,6 +10,12 @@ import { TaskForm } from "@/components/TaskForm";
 import { CalendarView } from "@/components/CalendarView";
 import { ProjectsPanel } from "@/components/ProjectsPanel";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Plus, ListTodo, Calendar as CalendarIcon, LogOut } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getISTDateString, normalizeDate } from "@/lib/dateUtils";
@@ -19,7 +25,7 @@ import { MobileProjectsDropdown } from "@/components/MobileProjectsDropdown";
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
-  const { tasks, isLoading: tasksLoading, addTask, updateTask, deleteTask, toggleTask } = useTasks();
+  const { tasks, isLoading: tasksLoading, addTask, updateTask, deleteTask, toggleTask, deleteOverdueTasks } = useTasks();
   const { projects, isLoading: projectsLoading, addProject, deleteProject } = useProjects();
   const isMobile = useIsMobile();
   
@@ -30,6 +36,7 @@ const Index = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [presetDate, setPresetDate] = useState<string | null>(null);
   const [taskOrderMap, setTaskOrderMap] = useState<Record<string, string[]>>({});
+  const [isCleanupOpen, setIsCleanupOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -37,27 +44,27 @@ const Index = () => {
     }
   }, [user, authLoading, navigate]);
 
-  // Auto-delete tasks with passed due dates
-  // Auto-delete tasks with passed due dates (run only after tasks load)
-useEffect(() => {
-  if (tasksLoading || !tasks.length) return; // wait until tasks are fetched
+  // Run a one-time cleanup once the full page is rendered (auth + tasks + projects)
+  const initialCleanupRef = useRef(false);
+  useEffect(() => {
+    if (
+      !authLoading &&
+      !tasksLoading &&
+      !projectsLoading &&
+      user &&
+      !initialCleanupRef.current
+    ) {
+      // Trigger the bulk deletion mutation exposed by useTasks
+      try {
+        deleteOverdueTasks();
+      } catch (err) {
+        // ignore - mutation logs errors internally
+      }
+      initialCleanupRef.current = true;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, tasksLoading, projectsLoading, user]);
 
-  // Get current date in IST (Indian Standard Time)
-  const today = new Date();
-  const utcOffset = today.getTimezoneOffset() * 60000;
-  const istTime = new Date(today.getTime() + (5.5 * 60 * 60 * 1000)); // UTC + 5:30
-  const todayString = istTime.toISOString().split("T")[0]; // "YYYY-MM-DD"
-
-  const overdueTasks = tasks.filter((task) => {
-    if (!task.dueDate || task.completed) return false;
-    const taskDate = normalizeDate(task.dueDate);
-    return taskDate < todayString; // compare in IST date string format
-  });
-
-  if (overdueTasks.length > 0) {
-    overdueTasks.forEach((task) => deleteTask(task.id));
-  }
-}, [tasksLoading, tasks]);
 
 
 
@@ -176,10 +183,15 @@ useEffect(() => {
               Organize your tasks with calm and clarity
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={handleSignOut} className="md:h-10">
-            <LogOut className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
-            <span className="hidden md:inline">Sign Out</span>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setIsCleanupOpen(true)} className="md:h-10">
+              Run cleanup
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleSignOut} className="md:h-10">
+              <LogOut className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+              <span className="hidden md:inline">Sign Out</span>
+            </Button>
+          </div>
         </header>
 
         {/* Mobile Projects Dropdown */}
@@ -349,6 +361,29 @@ useEffect(() => {
           projects={projects}
           presetDate={presetDate}
         />
+
+        {/* Cleanup confirmation dialog */}
+        <Dialog open={isCleanupOpen} onOpenChange={setIsCleanupOpen}>
+          <DialogContent className="sm:max-w-[420px]">
+            <DialogHeader>
+              <DialogTitle>Run overdue cleanup</DialogTitle>
+            </DialogHeader>
+            <div className="py-2">
+              <p className="text-sm text-muted-foreground">This will permanently delete all incomplete tasks whose due date has already passed. Do you want to continue?</p>
+            </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setIsCleanupOpen(false)}>Cancel</Button>
+              <Button onClick={() => {
+                try {
+                  deleteOverdueTasks();
+                } catch (e) {
+                  // ignore - mutation handles errors
+                }
+                setIsCleanupOpen(false);
+              }}>Run cleanup</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

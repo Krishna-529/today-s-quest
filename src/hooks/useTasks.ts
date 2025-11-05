@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/types";
 import { toast } from "sonner";
+import { useEffect } from "react";
+import { getISTDateString } from "@/lib/dateUtils";
 
 export function useTasks() {
   const queryClient = useQueryClient();
@@ -49,8 +51,9 @@ export function useTasks() {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       toast.success("Task created successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to create task");
+    onError: (error: unknown) => {
+      const msg = error instanceof Error ? error.message : String(error);
+      toast.error(msg || "Failed to create task");
     },
   });
 
@@ -74,8 +77,9 @@ export function useTasks() {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       toast.success("Task updated successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to update task");
+    onError: (error: unknown) => {
+      const msg = error instanceof Error ? error.message : String(error);
+      toast.error(msg || "Failed to update task");
     },
   });
 
@@ -88,8 +92,44 @@ export function useTasks() {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       toast.success("Task deleted");
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to delete task");
+    onError: (error: unknown) => {
+      const msg = error instanceof Error ? error.message : String(error);
+      toast.error(msg || "Failed to delete task");
+    },
+  });
+
+  // Mutation to delete overdue tasks in bulk for the current user
+  const deleteOverdueTasks = useMutation({
+    mutationFn: async () => {
+      // get current user id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { count: 0 };
+
+      // delete tasks where due_date is set and is before now and not completed
+      // Compare using the app's IST date string (YYYY-MM-DD) because
+      // due dates are stored from <input type="date" /> as 'YYYY-MM-DD'
+      const today = getISTDateString();
+      const { data, error } = await supabase
+        .from("tasks")
+        .delete()
+        .lt("due_date", today)
+        .eq("user_id", user.id)
+        .not("completed", "eq", true);
+
+      if (error) throw error;
+
+      return data;
+    },
+    onSuccess: (data) => {
+      if (Array.isArray(data) && data.length > 0) {
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        toast.success(`${data.length} overdue task(s) removed`);
+      }
+    },
+    onError: (error: unknown) => {
+      // don't spam users with errors; show a subtle toast
+      const msg = error instanceof Error ? error.message : String(error);
+      console.warn("Failed to delete overdue tasks", msg);
     },
   });
 
@@ -108,8 +148,9 @@ export function useTasks() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to update task");
+    onError: (error: unknown) => {
+      const msg = error instanceof Error ? error.message : String(error);
+      toast.error(msg || "Failed to update task");
     },
   });
 
@@ -120,5 +161,25 @@ export function useTasks() {
     updateTask: updateTask.mutate,
     deleteTask: deleteTask.mutate,
     toggleTask: toggleTask.mutate,
+    // internal hook action — exposed in case a component wants to trigger cleanup
+    deleteOverdueTasks: deleteOverdueTasks.mutate,
   };
+}
+
+// Side-effect: run cleanup when this hook is used in a mounted component
+export function useAutoCleanupOverdueTasks(intervalMs = 15 * 60 * 1000) {
+  const { deleteOverdueTasks } = useTasks();
+
+  useEffect(() => {
+    // run once on mount
+    deleteOverdueTasks();
+
+    // set interval to run periodically
+    const id = setInterval(() => {
+      deleteOverdueTasks();
+    }, intervalMs);
+
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }
