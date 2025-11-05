@@ -122,7 +122,23 @@ export function useTasks() {
     },
     onSuccess: (data) => {
       if (Array.isArray(data) && data.length > 0) {
-        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        // update tasks cache immediately so UI reflects deletions without a reload
+        try {
+          const deletedIds = new Set(
+            (data as Array<{ id?: string }>)
+              .map((d) => d.id)
+              .filter((id): id is string => Boolean(id))
+          );
+
+          queryClient.setQueryData<Task[] | undefined>(["tasks"], (old) => {
+            if (!Array.isArray(old)) return old as Task[] | undefined;
+            return old.filter((t) => !deletedIds.has(t.id));
+          });
+        } catch (e) {
+          // fallback to invalidation if cache update fails
+          queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        }
+
         toast.success(`${data.length} overdue task(s) removed`);
       }
     },
