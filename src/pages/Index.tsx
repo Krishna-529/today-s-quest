@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTasks } from "@/hooks/useTasks";
 import { useProjects } from "@/hooks/useProjects";
 import { useArchivedTasks } from "@/hooks/useOverdueTasks";
-import { Dashboard } from "@/components/Dashboard";
+// import { Dashboard } from "@/components/Dashboard";
 import { DraggableTaskList } from "@/components/DraggableTaskList";
 import { TaskForm } from "@/components/TaskForm";
 import { CalendarView } from "@/components/CalendarView";
@@ -170,10 +170,11 @@ const Index = () => {
     navigate("/auth");
   };
 
-  const handleAddTaskForDate = (date: string) => {
-    setPresetDate(date);
-    setIsFormOpen(true);
-  };
+  // Commented out - used by Dashboard component
+  // const handleAddTaskForDate = (date: string) => {
+  //   setPresetDate(date);
+  //   setIsFormOpen(true);
+  // };
 
   return (
     <div className="min-h-screen bg-background">
@@ -396,13 +397,14 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="mt-8 md:mt-12">
+        {/* Dashboard Stats - Commented out as requested */}
+        {/* <div className="mt-8 md:mt-12">
           <Dashboard 
             tasks={tasks} 
             onAddTaskForDate={handleAddTaskForDate}
             onViewUpcoming={() => setViewMode("upcoming")}
           />
-        </div>
+        </div> */}
 
         <TaskForm
           open={isFormOpen}
