@@ -11,6 +11,7 @@ import { TaskForm } from "@/components/TaskForm";
 import { CalendarView } from "@/components/CalendarView";
 import { ArchivedTasks } from "@/components/OverdueTasks";
 import { ProjectsPanel } from "@/components/ProjectsPanel";
+import { NavigationSidebar } from "@/components/NavigationSidebar";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, ListTodo, Calendar as CalendarIcon, LogOut, Archive } from "lucide-react";
+import { Plus, ListTodo, Calendar as CalendarIcon, LogOut, Archive, Menu } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getISTDateString, normalizeDate } from "@/lib/dateUtils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -39,6 +40,7 @@ const Index = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [presetDate, setPresetDate] = useState<string | null>(null);
   const [taskOrderMap, setTaskOrderMap] = useState<Record<string, string[]>>({});
+  const [currentTab, setCurrentTab] = useState<"tasks" | "calendar" | "archived">("tasks");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -177,15 +179,36 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-2 md:py-12 max-w-7xl">
         <header className="mb-2 md:mb-12 flex items-start justify-between">
-          <div>
-            <h1 className="text-xl md:text-5xl font-bold text-foreground mb-0.5 md:mb-3 tracking-tight">
-              Every minute counts
-            </h1>
-            <p className="text-xs md:text-lg text-muted-foreground">
-              Organize your tasks with calm and clarity
-            </p>
+          <div className="flex items-center gap-3">
+            {/* Mobile Hamburger Menu */}
+            {isMobile && (
+              <NavigationSidebar
+                currentView={viewMode}
+                currentTab={currentTab}
+                onViewChange={(view) => {
+                  setViewMode(view as "today" | "tomorrow" | "all" | "upcoming");
+                  setSelectedProject(null);
+                  setCurrentTab("tasks");
+                }}
+                onTabChange={(tab) => {
+                  setCurrentTab(tab as "tasks" | "calendar" | "archived");
+                }}
+                onArchive={archivePastDueTasks}
+                onSignOut={handleSignOut}
+                isArchiving={isArchiving}
+              />
+            )}
+            <div>
+              <h1 className="text-xl md:text-5xl font-bold text-foreground mb-0.5 md:mb-3 tracking-tight">
+                Every minute counts
+              </h1>
+              <p className="text-xs md:text-lg text-muted-foreground">
+                Organize your tasks with calm and clarity
+              </p>
+            </div>
           </div>
-          <div className="flex gap-2">
+          {/* Desktop Actions */}
+          <div className="hidden md:flex gap-2">
             <Button 
               variant="outline" 
               size="sm" 
@@ -289,7 +312,7 @@ const Index = () => {
               </Button>
             </div>
 
-            <Tabs defaultValue="tasks" className="w-full">
+            <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as "tasks" | "calendar" | "archived")} className="w-full">
               <div className="flex items-center justify-between mb-4">
                 <TabsList>
                   <TabsTrigger value="tasks" className="gap-2">
