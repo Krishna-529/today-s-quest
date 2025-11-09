@@ -1,5 +1,6 @@
 import { ArchivedTask, Project } from "@/types";
-import { useArchivedTasks } from "@/hooks/useOverdueTasks";
+// Legacy file retained temporarily for backward compatibility. Prefer using ArchivedTasks.tsx and useArchivedTasks hook.
+import { useArchivedTasks } from "@/hooks/useArchivedTasks";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Calendar, Clock, Trash2, AlertTriangle, TrendingUp, Check, Archive } from "lucide-react";
