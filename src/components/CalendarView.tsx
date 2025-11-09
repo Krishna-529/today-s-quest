@@ -57,7 +57,7 @@ export const CalendarView = ({ tasks, onToggle, onEdit, onDelete, projects }: Ca
       <Card>
         <CardHeader>
           <CardTitle>
-            Tasks for {selectedDate?.toLocaleDateString() || "Selected Date"}
+            Tasks for {selectedDate?.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '/') || "Selected Date"}
           </CardTitle>
         </CardHeader>
         <CardContent>

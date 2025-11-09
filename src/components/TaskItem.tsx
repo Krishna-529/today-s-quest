@@ -62,7 +62,7 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete, projects = [] }: Ta
             {task.dueDate && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Calendar className="w-3 h-3" />
-                <span>{new Date(task.dueDate).toLocaleDateString()}</span>
+                <span>{new Date(task.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
               </div>
             )}
             <span

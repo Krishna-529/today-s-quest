@@ -206,7 +206,7 @@ export const ArchivedTasks = ({ projects = [] }: ArchivedTasksProps) => {
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Calendar className="w-3 h-3" />
                             <span>
-                              Due: {new Date(task.due_date).toLocaleDateString()}
+                              Due: {new Date(task.due_date).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                             </span>
                           </div>
                         )}
@@ -240,7 +240,7 @@ export const ArchivedTasks = ({ projects = [] }: ArchivedTasksProps) => {
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Clock className="w-3 h-3" />
                           <span>
-                            Moved: {new Date(task.moved_at).toLocaleDateString()}
+                            Moved: {new Date(task.moved_at).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                           </span>
                         </div>
                       </div>
