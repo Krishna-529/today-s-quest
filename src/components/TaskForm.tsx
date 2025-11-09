@@ -36,20 +36,22 @@ export const TaskForm = ({ open, onClose, onSubmit, editTask, projects, presetDa
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
   useEffect(() => {
-    if (editTask) {
-      setTitle(editTask.title);
-      setDescription(editTask.description || "");
-      setDueDate(editTask.dueDate || "");
-      setPriority(editTask.priority);
-      setSelectedProjects(editTask.project_tags || []);
-    } else {
-      setTitle("");
-      setDescription("");
-      setDueDate(presetDate || "");
-      setPriority("medium");
-      setSelectedProjects([]);
+    if (open) {
+      if (editTask) {
+        setTitle(editTask.title);
+        setDescription(editTask.description || "");
+        setDueDate(editTask.dueDate || "");
+        setPriority(editTask.priority);
+        setSelectedProjects(editTask.project_tags || []);
+      } else {
+        setTitle("");
+        setDescription("");
+        setDueDate(presetDate || "");
+        setPriority("medium");
+        setSelectedProjects([]);
+      }
     }
-  }, [editTask, presetDate]);
+  }, [open, editTask, presetDate]);
 
   const toggleProject = (projectId: string) => {
     setSelectedProjects(prev => 

@@ -6,20 +6,12 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import { useAutoCleanupOverdueTasks } from "@/hooks/useTasks";
 
 const queryClient = new QueryClient();
-
-function AutoCleanupRunner() {
-  useAutoCleanupOverdueTasks();
-  return null;
-}
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Start auto-cleanup after QueryClientProvider is available */}
-      <AutoCleanupRunner />
       <TooltipProvider>
         <Toaster />
         <Sonner />
