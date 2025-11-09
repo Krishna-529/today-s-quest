@@ -185,6 +185,7 @@ const Index = () => {
               <NavigationSidebar
                 currentView={viewMode}
                 currentTab={currentTab}
+                completionFilter={completionFilter}
                 onViewChange={(view) => {
                   setViewMode(view as "today" | "tomorrow" | "all" | "upcoming");
                   setSelectedProject(null);
@@ -192,6 +193,9 @@ const Index = () => {
                 }}
                 onTabChange={(tab) => {
                   setCurrentTab(tab as "tasks" | "calendar" | "archived");
+                }}
+                onCompletionFilterChange={(filter) => {
+                  setCompletionFilter(filter);
                 }}
                 onArchive={archivePastDueTasks}
                 onSignOut={handleSignOut}
@@ -253,8 +257,8 @@ const Index = () => {
           )}
 
           <div className={isMobile ? "col-span-1" : "lg:col-span-3"}>
-            {/* View Mode Selector - Only show when no project is selected */}
-            {!selectedProject && (
+            {/* View Mode Selector - Only show on desktop when no project is selected */}
+            {!isMobile && !selectedProject && (
               <div className="mb-4 flex gap-2 flex-wrap">
                 <Button
                   size="sm"
@@ -287,68 +291,76 @@ const Index = () => {
               </div>
             )}
 
-            {/* Completion Filter */}
-            <div className="mb-4 flex gap-2">
-              <Button
-                size="sm"
-                variant={completionFilter === "all" ? "default" : "outline"}
-                onClick={() => setCompletionFilter("all")}
-              >
-                All
-              </Button>
-              <Button
-                size="sm"
-                variant={completionFilter === "incomplete" ? "default" : "outline"}
-                onClick={() => setCompletionFilter("incomplete")}
-              >
-                Incomplete
-              </Button>
-              <Button
-                size="sm"
-                variant={completionFilter === "completed" ? "default" : "outline"}
-                onClick={() => setCompletionFilter("completed")}
-              >
-                Completed
-              </Button>
-            </div>
+            {/* Completion Filter - Only show on desktop */}
+            {!isMobile && (
+              <div className="mb-4 flex gap-2">
+                <Button
+                  size="sm"
+                  variant={completionFilter === "all" ? "default" : "outline"}
+                  onClick={() => setCompletionFilter("all")}
+                >
+                  All
+                </Button>
+                <Button
+                  size="sm"
+                  variant={completionFilter === "incomplete" ? "default" : "outline"}
+                  onClick={() => setCompletionFilter("incomplete")}
+                >
+                  Incomplete
+                </Button>
+                <Button
+                  size="sm"
+                  variant={completionFilter === "completed" ? "default" : "outline"}
+                  onClick={() => setCompletionFilter("completed")}
+                >
+                  Completed
+                </Button>
+              </div>
+            )}
 
             <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as "tasks" | "calendar" | "archived")} className="w-full">
               <div className="flex items-center justify-between mb-4">
-                <TabsList>
-                  <TabsTrigger value="tasks" className="gap-2">
-                    <ListTodo className="w-4 h-4" />
-                    Tasks
-                  </TabsTrigger>
-                  <TabsTrigger value="calendar" className="gap-2">
-                    <CalendarIcon className="w-4 h-4" />
-                    Calendar
-                  </TabsTrigger>
-                  <TabsTrigger value="archived" className="gap-2">
-                    <Archive className="w-4 h-4" />
-                    Archived
-                  </TabsTrigger>
-                </TabsList>
+                {/* Tabs - Only show on desktop */}
+                {!isMobile && (
+                  <TabsList>
+                    <TabsTrigger value="tasks" className="gap-2">
+                      <ListTodo className="w-4 h-4" />
+                      Tasks
+                    </TabsTrigger>
+                    <TabsTrigger value="calendar" className="gap-2">
+                      <CalendarIcon className="w-4 h-4" />
+                      Calendar
+                    </TabsTrigger>
+                    <TabsTrigger value="archived" className="gap-2">
+                      <Archive className="w-4 h-4" />
+                      Archived
+                    </TabsTrigger>
+                  </TabsList>
+                )}
 
-                <Button onClick={() => {
-                  // Auto-set date based on current view mode
-                  if (!selectedProject) {
-                    if (viewMode === "today") {
-                      const today = getISTDateString();
-                      setPresetDate(today);
-                    } else if (viewMode === "tomorrow") {
-                      const tomorrow = new Date(new Date(getISTDateString()).getTime() + 86400000).toISOString().split("T")[0];
-                      setPresetDate(tomorrow);
+                {/* New Task Button - Only show on desktop in this position */}
+                {!isMobile && (
+                  <Button onClick={() => {
+                    // Auto-set date based on current view mode
+                    if (!selectedProject) {
+                      if (viewMode === "today") {
+                        const today = getISTDateString();
+                        setPresetDate(today);
+                      } else if (viewMode === "tomorrow") {
+                        const tomorrow = new Date(new Date(getISTDateString()).getTime() + 86400000).toISOString().split("T")[0];
+                        setPresetDate(tomorrow);
+                      } else {
+                        setPresetDate(null);
+                      }
                     } else {
                       setPresetDate(null);
                     }
-                  } else {
-                    setPresetDate(null);
-                  }
-                  setIsFormOpen(true);
-                }}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Task
-                </Button>
+                    setIsFormOpen(true);
+                  }}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Task
+                  </Button>
+                )}
               </div>
 
               <TabsContent value="tasks" className="mt-0">
@@ -404,6 +416,33 @@ const Index = () => {
           projects={projects}
           presetDate={presetDate}
         />
+
+        {/* Mobile Floating Action Button */}
+        {isMobile && (
+          <Button
+            size="lg"
+            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50"
+            onClick={() => {
+              // Auto-set date based on current view mode
+              if (!selectedProject) {
+                if (viewMode === "today") {
+                  const today = getISTDateString();
+                  setPresetDate(today);
+                } else if (viewMode === "tomorrow") {
+                  const tomorrow = new Date(new Date(getISTDateString()).getTime() + 86400000).toISOString().split("T")[0];
+                  setPresetDate(tomorrow);
+                } else {
+                  setPresetDate(null);
+                }
+              } else {
+                setPresetDate(null);
+              }
+              setIsFormOpen(true);
+            }}
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
+        )}
       </div>
     </div>
   );

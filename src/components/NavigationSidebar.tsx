@@ -21,8 +21,10 @@ interface NavItem {
 interface NavigationSidebarProps {
   currentView: string;
   currentTab?: string;
+  completionFilter?: "all" | "completed" | "incomplete";
   onViewChange: (view: string) => void;
   onTabChange?: (tab: string) => void;
+  onCompletionFilterChange?: (filter: "all" | "completed" | "incomplete") => void;
   onArchive: () => void;
   onSignOut: () => void;
   isArchiving?: boolean;
@@ -32,8 +34,10 @@ interface NavigationSidebarProps {
 export const NavigationSidebar = ({
   currentView,
   currentTab = "tasks",
+  completionFilter = "all",
   onViewChange,
   onTabChange,
+  onCompletionFilterChange,
   onArchive,
   onSignOut,
   isArchiving = false,
@@ -132,6 +136,41 @@ export const NavigationSidebar = ({
                 </Button>
               );
             })}
+          </div>
+
+          <Separator />
+
+          {/* Completion Filter */}
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground mb-2 px-2">
+              Filter Tasks
+            </p>
+            <div className="grid grid-cols-3 gap-2 px-2">
+              <Button
+                size="sm"
+                variant={completionFilter === "all" ? "default" : "outline"}
+                onClick={() => onCompletionFilterChange?.("all")}
+                className="text-xs"
+              >
+                All
+              </Button>
+              <Button
+                size="sm"
+                variant={completionFilter === "incomplete" ? "default" : "outline"}
+                onClick={() => onCompletionFilterChange?.("incomplete")}
+                className="text-xs"
+              >
+                Active
+              </Button>
+              <Button
+                size="sm"
+                variant={completionFilter === "completed" ? "default" : "outline"}
+                onClick={() => onCompletionFilterChange?.("completed")}
+                className="text-xs"
+              >
+                Done
+              </Button>
+            </div>
           </div>
 
           <Separator />
