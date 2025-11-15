@@ -1,7 +1,13 @@
 import { Task, Priority, Project } from "@/types";
-import { Check, Calendar, Edit2, Trash2, Tag } from "lucide-react";
+import { Check, Calendar, Edit2, Trash2, Tag, Pin } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 interface TaskItemProps {
   task: Task;
@@ -95,6 +101,72 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete, onPin, projects = [
         </div>
 
         <div className="flex gap-1 items-center opacity-0 group-hover:opacity-100 transition-opacity">
+          {onPin && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-8 w-8",
+                    task.pinned_scope && "text-primary"
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                  }}
+                >
+                  <Pin className={cn("w-4 h-4", task.pinned_scope && "fill-current")} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPin(task.id, "today");
+                  }}
+                  className={cn(task.pinned_scope === "today" && "bg-accent")}
+                >
+                  <Pin className="w-4 h-4 mr-2" />
+                  Pin to Today
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPin(task.id, "yesterday");
+                  }}
+                  className={cn(task.pinned_scope === "yesterday" && "bg-accent")}
+                >
+                  <Pin className="w-4 h-4 mr-2" />
+                  Pin to Yesterday
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPin(task.id, "all");
+                  }}
+                  className={cn(task.pinned_scope === "all" && "bg-accent")}
+                >
+                  <Pin className="w-4 h-4 mr-2" />
+                  Pin to All
+                </DropdownMenuItem>
+                {task.pinned_scope && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPin(task.id, null);
+                      }}
+                      className="text-muted-foreground"
+                    >
+                      <Pin className="w-4 h-4 mr-2 rotate-45" />
+                      Unpin
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -119,22 +191,6 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete, onPin, projects = [
           >
             <Trash2 className="w-4 h-4" />
           </Button>
-          {/* Pin selector */}
-          <select
-            value={task.pinned_scope ?? ""}
-            onChange={(e) => {
-              e.stopPropagation();
-              const val = e.target.value as "today" | "yesterday" | "all" | "";
-              if (onPin) onPin(task.id, val === "" ? null : val);
-            }}
-            className="text-xs border rounded px-2 py-1 bg-transparent"
-            title="Pin task"
-          >
-            <option value="">Pin</option>
-            <option value="today">Today</option>
-            <option value="yesterday">Yesterday</option>
-            <option value="all">All time</option>
-          </select>
         </div>
       </div>
     </div>
