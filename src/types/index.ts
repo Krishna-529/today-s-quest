@@ -5,6 +5,10 @@ export interface Task {
   title: string;
   description?: string;
   dueDate?: string;
+  // pin scope: 'today' pins task to today's section, 'yesterday' pins to yesterday, 'all' pins permanently at top
+  pinned_scope?: "today" | "yesterday" | "all";
+  // timestamp when the task was pinned
+  pinned_at?: string;
   priority: Priority;
   completed: boolean;
   project_tags?: string[];

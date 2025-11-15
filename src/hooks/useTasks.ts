@@ -21,6 +21,8 @@ export function useTasks() {
         title: task.title,
         description: task.description,
         dueDate: task.due_date,
+        pinned_scope: task.pinned_scope,
+        pinned_at: task.pinned_at,
         priority: task.priority as "low" | "medium" | "high",
         completed: task.completed,
         project_tags: task.project_tags,
@@ -117,6 +119,33 @@ export function useTasks() {
     },
   });
 
+  const pinTask = useMutation({
+    mutationFn: async ({ id, scope }: { id: string; scope: "today" | "yesterday" | "all" | null }) => {
+      const update: any = {};
+      if (scope) {
+        update.pinned_scope = scope;
+        update.pinned_at = new Date().toISOString();
+      } else {
+        update.pinned_scope = null;
+        update.pinned_at = null;
+      }
+
+      const { error } = await supabase
+        .from("tasks")
+        .update(update)
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (error: unknown) => {
+      const msg = error instanceof Error ? error.message : String(error);
+      toast.error(msg || "Failed to pin task");
+    },
+  });
+
   return {
     tasks,
     isLoading,
@@ -124,5 +153,6 @@ export function useTasks() {
     updateTask: updateTask.mutate,
     deleteTask: deleteTask.mutate,
     toggleTask: toggleTask.mutate,
+    pinTask: pinTask.mutate,
   };
 }

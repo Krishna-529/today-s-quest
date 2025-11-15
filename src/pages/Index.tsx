@@ -28,7 +28,7 @@ import { MobileProjectsDropdown } from "@/components/MobileProjectsDropdown";
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
-  const { tasks, isLoading: tasksLoading, addTask, updateTask, deleteTask, toggleTask } = useTasks();
+  const { tasks, isLoading: tasksLoading, addTask, updateTask, deleteTask, toggleTask, pinTask } = useTasks();
   const { projects, isLoading: projectsLoading, addProject, deleteProject } = useProjects();
   const { archivePastDueTasks, isArchiving } = useArchivedTasks();
   const isMobile = useIsMobile();
@@ -150,6 +150,10 @@ const Index = () => {
   const handleEditTask = (task: Task) => {
     setEditingTask(task);
     setIsFormOpen(true);
+  };
+
+  const handlePinTask = (id: string, scope: "today" | "yesterday" | "all" | null) => {
+    pinTask({ id, scope });
   };
 
   const handleDeleteProject = (id: string) => {
@@ -370,6 +374,7 @@ const Index = () => {
                   onToggle={toggleTask}
                   onEdit={handleEditTask}
                   onDelete={deleteTask}
+                  onPin={handlePinTask}
                   onReorder={(newTasks) => {
                     const key = selectedProject
                       ? `project:${selectedProject}|${completionFilter}`
@@ -386,6 +391,7 @@ const Index = () => {
                   onToggle={toggleTask}
                   onEdit={handleEditTask}
                   onDelete={deleteTask}
+                  onPin={handlePinTask}
                   projects={projects}
                 />
               </TabsContent>

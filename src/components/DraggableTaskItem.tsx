@@ -11,6 +11,7 @@ interface DraggableTaskItemProps {
   onToggle: (id: string) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  onPin?: (id: string, scope: "today" | "yesterday" | "all" | null) => void;
   projects?: Project[];
 }
 
@@ -19,6 +20,7 @@ export const DraggableTaskItem = ({
   onToggle,
   onEdit,
   onDelete,
+  onPin,
   projects,
 }: DraggableTaskItemProps) => {
   const isMobile = useIsMobile();
@@ -57,6 +59,7 @@ export const DraggableTaskItem = ({
         onToggle={onToggle}
         onEdit={onEdit}
         onDelete={onDelete}
+        onPin={onPin}
         projects={projects}
       />
     </div>

@@ -7,10 +7,11 @@ interface TaskListProps {
   onToggle: (id: string) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  onPin?: (id: string, scope: "today" | "yesterday" | "all" | null) => void;
   projects?: Project[];
 }
 
-export const TaskList = ({ tasks, onToggle, onEdit, onDelete, projects }: TaskListProps) => {
+export const TaskList = ({ tasks, onToggle, onEdit, onDelete, onPin, projects }: TaskListProps) => {
   if (tasks.length === 0) {
     return (
       <div className="text-center py-12">
@@ -28,6 +29,7 @@ export const TaskList = ({ tasks, onToggle, onEdit, onDelete, projects }: TaskLi
           onToggle={onToggle}
           onEdit={onEdit}
           onDelete={onDelete}
+          onPin={onPin}
           projects={projects}
         />
       ))}

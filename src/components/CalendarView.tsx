@@ -10,10 +10,11 @@ interface CalendarViewProps {
   onToggle: (id: string) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  onPin?: (id: string, scope: "today" | "yesterday" | "all" | null) => void;
   projects?: Project[];
 }
 
-export const CalendarView = ({ tasks, onToggle, onEdit, onDelete, projects }: CalendarViewProps) => {
+export const CalendarView = ({ tasks, onToggle, onEdit, onDelete, onPin, projects }: CalendarViewProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
   const tasksWithDates = tasks.filter((task) => task.dueDate);
@@ -74,6 +75,7 @@ export const CalendarView = ({ tasks, onToggle, onEdit, onDelete, projects }: Ca
                   onToggle={onToggle}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onPin={onPin}
                   projects={projects}
                 />
               ))}

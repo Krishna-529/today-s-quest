@@ -8,6 +8,7 @@ interface TaskItemProps {
   onToggle: (id: string) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  onPin?: (id: string, scope: "today" | "yesterday" | "all" | null) => void;
   projects?: Project[];
 }
 
@@ -17,7 +18,7 @@ const priorityColors: Record<Priority, string> = {
   high: "bg-priority-high/20 text-priority-high border-priority-high/30",
 };
 
-export const TaskItem = ({ task, onToggle, onEdit, onDelete, projects = [] }: TaskItemProps) => {
+export const TaskItem = ({ task, onToggle, onEdit, onDelete, onPin, projects = [] }: TaskItemProps) => {
   const taskProjects = projects.filter(p => task.project_tags?.includes(p.id));
 
   return (
@@ -93,7 +94,7 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete, projects = [] }: Ta
           </div>
         </div>
 
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex gap-1 items-center opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
             variant="ghost"
             size="icon"
@@ -118,6 +119,22 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete, projects = [] }: Ta
           >
             <Trash2 className="w-4 h-4" />
           </Button>
+          {/* Pin selector */}
+          <select
+            value={task.pinned_scope ?? ""}
+            onChange={(e) => {
+              e.stopPropagation();
+              const val = e.target.value as "today" | "yesterday" | "all" | "";
+              if (onPin) onPin(task.id, val === "" ? null : val);
+            }}
+            className="text-xs border rounded px-2 py-1 bg-transparent"
+            title="Pin task"
+          >
+            <option value="">Pin</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="all">All time</option>
+          </select>
         </div>
       </div>
     </div>

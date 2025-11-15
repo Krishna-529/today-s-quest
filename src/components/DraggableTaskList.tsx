@@ -21,6 +21,7 @@ interface DraggableTaskListProps {
   onToggle: (id: string) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  onPin?: (id: string, scope: "today" | "yesterday" | "all" | null) => void;
   onReorder: (tasks: Task[]) => void;
   projects?: Project[];
 }
@@ -30,6 +31,7 @@ export const DraggableTaskList = ({
   onToggle,
   onEdit,
   onDelete,
+  onPin,
   onReorder,
   projects,
 }: DraggableTaskListProps) => {
@@ -76,6 +78,7 @@ export const DraggableTaskList = ({
               onToggle={onToggle}
               onEdit={onEdit}
               onDelete={onDelete}
+              onPin={onPin}
               projects={projects}
             />
           ))}
