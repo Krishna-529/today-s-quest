@@ -19,11 +19,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, ListTodo, Calendar as CalendarIcon, LogOut, Archive, Menu } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus, ListTodo, Calendar as CalendarIcon, LogOut, Archive, Menu, Check } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getISTDateString, normalizeDate } from "@/lib/dateUtils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileProjectsDropdown } from "@/components/MobileProjectsDropdown";
+import { cn } from "@/lib/utils";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -34,13 +41,13 @@ const Index = () => {
   const isMobile = useIsMobile();
   
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"today" | "tomorrow" | "all" | "upcoming">("today");
+  const [viewMode, setViewMode] = useState<"today" | "tomorrow" | "all" | "upcoming" | "calendar" | "archived">("today");
   const [completionFilter, setCompletionFilter] = useState<"all" | "completed" | "incomplete">("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [presetDate, setPresetDate] = useState<string | null>(null);
   const [taskOrderMap, setTaskOrderMap] = useState<Record<string, string[]>>({});
-  const [currentTab, setCurrentTab] = useState<"tasks" | "calendar" | "archived">("tasks");
+  const [currentTab, setCurrentTab] = useState<"tasks" | "archived">("tasks");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -200,12 +207,13 @@ const Index = () => {
                 currentTab={currentTab}
                 completionFilter={completionFilter}
                 onViewChange={(view) => {
-                  setViewMode(view as "today" | "tomorrow" | "all" | "upcoming");
+                  setViewMode(view as "today" | "tomorrow" | "all" | "upcoming" | "calendar" | "archived");
                   setSelectedProject(null);
                   setCurrentTab("tasks");
                 }}
                 onTabChange={(tab) => {
-                  setCurrentTab(tab as "tasks" | "calendar" | "archived");
+                  const validTab = tab === "tasks" || tab === "archived" ? tab : "tasks";
+                  setCurrentTab(validTab);
                 }}
                 onCompletionFilterChange={(filter) => {
                   setCompletionFilter(filter);
@@ -270,113 +278,132 @@ const Index = () => {
           )}
 
           <div className={isMobile ? "col-span-1" : "lg:col-span-3"}>
-            {/* View Mode Selector - Only show on desktop when no project is selected */}
+            {/* View Mode Selector and Completion Filter - Only show on desktop when no project is selected */}
             {!isMobile && !selectedProject && (
-              <div className="mb-4 flex gap-2 flex-wrap">
-                <Button
-                  size="sm"
-                  variant={viewMode === "today" ? "default" : "outline"}
-                  onClick={() => setViewMode("today")}
-                >
-                  Today
-                </Button>
-                <Button
-                  size="sm"
-                  variant={viewMode === "tomorrow" ? "default" : "outline"}
-                  onClick={() => setViewMode("tomorrow")}
-                >
-                  Tomorrow
-                </Button>
-                <Button
-                  size="sm"
-                  variant={viewMode === "upcoming" ? "default" : "outline"}
-                  onClick={() => setViewMode("upcoming")}
-                >
-                  Upcoming
-                </Button>
-                <Button
-                  size="sm"
-                  variant={viewMode === "all" ? "default" : "outline"}
-                  onClick={() => setViewMode("all")}
-                >
-                  All
-                </Button>
-              </div>
-            )}
-
-            {/* Completion Filter - Only show on desktop */}
-            {!isMobile && (
-              <div className="mb-4 flex gap-2">
-                <Button
-                  size="sm"
-                  variant={completionFilter === "all" ? "default" : "outline"}
-                  onClick={() => setCompletionFilter("all")}
-                >
-                  All
-                </Button>
-                <Button
-                  size="sm"
-                  variant={completionFilter === "incomplete" ? "default" : "outline"}
-                  onClick={() => setCompletionFilter("incomplete")}
-                >
-                  Incomplete
-                </Button>
-                <Button
-                  size="sm"
-                  variant={completionFilter === "completed" ? "default" : "outline"}
-                  onClick={() => setCompletionFilter("completed")}
-                >
-                  Completed
-                </Button>
-              </div>
-            )}
-
-            <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as "tasks" | "calendar" | "archived")} className="w-full">
-              <div className="flex items-center justify-between mb-4">
-                {/* Tabs - Only show on desktop */}
-                {!isMobile && (
-                  <TabsList>
-                    <TabsTrigger value="tasks" className="gap-2">
-                      <ListTodo className="w-4 h-4" />
-                      Tasks
-                    </TabsTrigger>
-                    <TabsTrigger value="calendar" className="gap-2">
-                      <CalendarIcon className="w-4 h-4" />
-                      Calendar
-                    </TabsTrigger>
-                    <TabsTrigger value="archived" className="gap-2">
-                      <Archive className="w-4 h-4" />
-                      Archived
-                    </TabsTrigger>
-                  </TabsList>
+              <div className="mb-4 flex items-center justify-between gap-4">
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    size="sm"
+                    variant={viewMode === "today" ? "default" : "outline"}
+                    onClick={() => setViewMode("today")}
+                  >
+                    Today
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={viewMode === "tomorrow" ? "default" : "outline"}
+                    onClick={() => setViewMode("tomorrow")}
+                  >
+                    Tomorrow
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={viewMode === "upcoming" ? "default" : "outline"}
+                    onClick={() => setViewMode("upcoming")}
+                  >
+                    Upcoming
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={viewMode === "all" ? "default" : "outline"}
+                    onClick={() => setViewMode("all")}
+                  >
+                    All
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={viewMode === "calendar" ? "default" : "outline"}
+                    onClick={() => setViewMode("calendar")}
+                  >
+                    <CalendarIcon className="w-4 h-4 mr-2" />
+                    Calendar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={viewMode === "archived" ? "default" : "outline"}
+                    onClick={() => setViewMode("archived")}
+                  >
+                    <Archive className="w-4 h-4 mr-2" />
+                    Archived
+                  </Button>
+                </div>
+                
+                {/* Completion Filter Dropdown */}
+                {viewMode !== "calendar" && viewMode !== "archived" && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" variant="outline" className="min-w-[160px] justify-start">
+                        <ListTodo className="w-4 h-4 mr-2" />
+                        Filter: {completionFilter === "all" ? "All" : completionFilter === "incomplete" ? "Incomplete" : "Completed"}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-[200px] p-2">
+                      <DropdownMenuItem
+                        onClick={() => setCompletionFilter("all")}
+                        className={cn("cursor-pointer py-3 px-3 mb-1", completionFilter === "all" && "bg-accent font-medium")}
+                      >
+                        <Check className={cn("w-4 h-4 mr-3", completionFilter === "all" ? "opacity-100" : "opacity-0")} />
+                        All Tasks
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setCompletionFilter("incomplete")}
+                        className={cn("cursor-pointer py-3 px-3 mb-1", completionFilter === "incomplete" && "bg-accent font-medium")}
+                      >
+                        <Check className={cn("w-4 h-4 mr-3", completionFilter === "incomplete" ? "opacity-100" : "opacity-0")} />
+                        Incomplete Only
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setCompletionFilter("completed")}
+                        className={cn("cursor-pointer py-3 px-3", completionFilter === "completed" && "bg-accent font-medium")}
+                      >
+                        <Check className={cn("w-4 h-4 mr-3", completionFilter === "completed" ? "opacity-100" : "opacity-0")} />
+                        Completed Only
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
+              </div>
+            )}
 
-                {/* New Task Button - Only show on desktop in this position */}
+            {viewMode === "calendar" ? (
+              <CalendarView
+                tasks={tasks}
+                onToggle={toggleTask}
+                onEdit={handleEditTask}
+                onDelete={deleteTask}
+                onPin={handlePinTask}
+                projects={projects}
+              />
+            ) : viewMode === "archived" ? (
+              <ArchivedTasks projects={projects} />
+            ) : (
+              <>
+                {/* New Task Button - Only show on desktop */}
                 {!isMobile && (
-                  <Button onClick={() => {
-                    // Auto-set date based on current view mode
-                    if (!selectedProject) {
-                      if (viewMode === "today") {
-                        const today = getISTDateString();
-                        setPresetDate(today);
-                      } else if (viewMode === "tomorrow") {
-                        const tomorrow = new Date(new Date(getISTDateString()).getTime() + 86400000).toISOString().split("T")[0];
-                        setPresetDate(tomorrow);
+                  <div className="flex justify-end mb-4">
+                    <Button onClick={() => {
+                      // Auto-set date based on current view mode
+                      if (!selectedProject) {
+                        if (viewMode === "today") {
+                          const today = getISTDateString();
+                          setPresetDate(today);
+                        } else if (viewMode === "tomorrow") {
+                          const tomorrow = new Date(new Date(getISTDateString()).getTime() + 86400000).toISOString().split("T")[0];
+                          setPresetDate(tomorrow);
+                        } else {
+                          setPresetDate(null);
+                        }
                       } else {
                         setPresetDate(null);
                       }
-                    } else {
-                      setPresetDate(null);
-                    }
-                    setIsFormOpen(true);
-                  }}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Task
-                  </Button>
+                      setIsFormOpen(true);
+                    }}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      New Task
+                    </Button>
+                  </div>
                 )}
-              </div>
 
-              <TabsContent value="tasks" className="mt-0">
                 <DraggableTaskList
                   tasks={filteredTasks}
                   onToggle={toggleTask}
@@ -391,23 +418,8 @@ const Index = () => {
                   }}
                   projects={projects}
                 />
-              </TabsContent>
-
-              <TabsContent value="calendar" className="mt-0">
-                <CalendarView
-                  tasks={filteredTasks}
-                  onToggle={toggleTask}
-                  onEdit={handleEditTask}
-                  onDelete={deleteTask}
-                  onPin={handlePinTask}
-                  projects={projects}
-                />
-              </TabsContent>
-
-              <TabsContent value="archived" className="mt-0">
-                <ArchivedTasks projects={projects} />
-              </TabsContent>
-            </Tabs>
+              </>
+            )}
           </div>
         </div>
 

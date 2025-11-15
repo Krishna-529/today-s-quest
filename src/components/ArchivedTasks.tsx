@@ -128,8 +128,16 @@ export const ArchivedTasks = ({ projects = [] }: ArchivedTasksProps) => {
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-foreground">{task.title}</span>
+                      <span className={cn(
+                        "text-xs px-2 py-0.5 rounded-full border font-medium",
+                        task.completed 
+                          ? "bg-green-500/10 text-green-600 border-green-500/20" 
+                          : "bg-orange-500/10 text-orange-600 border-orange-500/20"
+                      )}>
+                        {task.completed ? '✓ Completed' : '⚠ Incomplete'}
+                      </span>
                       <span className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", priorityColors[task.priority])}>
                         {task.priority}
                       </span>

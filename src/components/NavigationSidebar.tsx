@@ -48,11 +48,11 @@ export const NavigationSidebar = ({
     { id: "tomorrow", label: "Tomorrow", icon: Calendar },
     { id: "upcoming", label: "Upcoming", icon: Calendar },
     { id: "all", label: "All Tasks", icon: FolderKanban },
-  ];
-
-  const secondaryNavItems: NavItem[] = [
+    { id: "calendar", label: "Calendar", icon: Calendar },
     { id: "archived", label: "Archived Tasks", icon: Archive, badge: overdueCount },
   ];
+
+  const secondaryNavItems: NavItem[] = [];
 
   return (
     <Sheet>

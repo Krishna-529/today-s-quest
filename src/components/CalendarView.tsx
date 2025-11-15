@@ -3,7 +3,7 @@ import { Calendar } from "./ui/calendar";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { TaskItem } from "./TaskItem";
-import { normalizeDate } from "@/lib/dateUtils";
+import { normalizeDate, normalizeDateToIST } from "@/lib/dateUtils";
 
 interface CalendarViewProps {
   tasks: Task[];
@@ -19,7 +19,8 @@ export const CalendarView = ({ tasks, onToggle, onEdit, onDelete, onPin, project
 
   const tasksWithDates = tasks.filter((task) => task.dueDate);
   
-  const selectedDateString = normalizeDate(selectedDate?.toISOString());
+  // Use IST normalization for consistent date comparison
+  const selectedDateString = selectedDate ? normalizeDateToIST(selectedDate) : null;
   const tasksForSelectedDate = tasksWithDates.filter(
     (task) => normalizeDate(task.dueDate) === selectedDateString
   );
@@ -40,15 +41,8 @@ export const CalendarView = ({ tasks, onToggle, onEdit, onDelete, onPin, project
             className="rounded-md border pointer-events-auto"
             modifiers={{
               hasTask: (date) => {
-                const dateString = normalizeDate(date.toISOString());
+                const dateString = normalizeDateToIST(date);
                 return datesWithTasks.has(dateString);
-              },
-            }}
-            modifiersStyles={{
-              hasTask: {
-                fontWeight: "bold",
-                textDecoration: "underline",
-                color: "hsl(var(--primary))",
               },
             }}
           />

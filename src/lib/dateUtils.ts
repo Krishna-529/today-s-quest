@@ -21,3 +21,9 @@ export const normalizeDate = (dateStr?: string) => {
   if (!dateStr) return null;
   return dateStr.split("T")[0];
 };
+
+// Convert a Date object to IST and return normalized date string (YYYY-MM-DD)
+export const normalizeDateToIST = (date: Date) => {
+  const istDate = toZonedTime(date, IST_TIMEZONE);
+  return format(istDate, 'yyyy-MM-dd');
+};
