@@ -66,6 +66,14 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete, onPin, projects = [
           )}
 
           <div className="flex flex-wrap items-center gap-2 mt-2">
+            {task.pinned_scope && (
+              <div className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                <Pin className="w-3 h-3 fill-current" />
+                <span className="font-medium">
+                  {task.pinned_scope === 'today' ? 'Today' : task.pinned_scope === 'yesterday' ? 'Yesterday' : 'All Time'}
+                </span>
+              </div>
+            )}
             {task.dueDate && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Calendar className="w-3 h-3" />

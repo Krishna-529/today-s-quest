@@ -132,6 +132,14 @@ const Index = () => {
         .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     }
 
+    // Sort pinned tasks to the top
+    filtered = filtered.slice().sort((a, b) => {
+      const aPinned = a.pinned_scope ? 1 : 0;
+      const bPinned = b.pinned_scope ? 1 : 0;
+      if (aPinned !== bPinned) return bPinned - aPinned; // pinned first
+      return 0; // maintain existing order
+    });
+
     return filtered;
   };
 
