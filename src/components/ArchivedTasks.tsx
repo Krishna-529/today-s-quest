@@ -19,6 +19,7 @@ import { Badge } from "./ui/badge";
 
 interface ArchivedTasksProps {
   projects?: Project[];
+  selectedProjectId?: string;
 }
 
 const priorityColors = {
@@ -27,7 +28,7 @@ const priorityColors = {
   high: "bg-priority-high/20 text-priority-high border-priority-high/30",
 };
 
-export const ArchivedTasks = ({ projects = [] }: ArchivedTasksProps) => {
+export const ArchivedTasks = ({ projects = [], selectedProjectId }: ArchivedTasksProps) => {
   const {
     archivedTasks,
     stats,
@@ -35,6 +36,33 @@ export const ArchivedTasks = ({ projects = [] }: ArchivedTasksProps) => {
     deleteArchivedTask,
     clearAllArchivedTasks,
   } = useArchivedTasks();
+
+  const filteredArchivedTasks = selectedProjectId
+    ? archivedTasks.filter((t) => t.project_tags?.includes(selectedProjectId))
+    : archivedTasks;
+
+  const computedStats = {
+    total_archived: filteredArchivedTasks.length,
+    total_completed: filteredArchivedTasks.filter((t) => t.completed).length,
+    total_incomplete: filteredArchivedTasks.filter((t) => !t.completed).length,
+    avg_days_past_due:
+      filteredArchivedTasks.length === 0
+        ? 0
+        : Math.round(
+            filteredArchivedTasks
+              .map((t) => {
+                try {
+                  const moved = t.moved_at ? new Date(t.moved_at).getTime() : 0;
+                  const due = t.due_date ? new Date(t.due_date).getTime() : moved;
+                  const diffDays = moved && due ? (moved - due) / (1000 * 60 * 60 * 24) : 0;
+                  return isFinite(diffDays) ? diffDays : 0;
+                } catch (e) {
+                  return 0;
+                }
+              })
+              .reduce((a, b) => a + b, 0) / filteredArchivedTasks.length
+          ),
+  };
 
   if (isLoading) {
     return (
@@ -60,7 +88,7 @@ export const ArchivedTasks = ({ projects = [] }: ArchivedTasksProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.total_archived}</div>
+            <div className="text-3xl font-bold">{computedStats.total_archived}</div>
             <p className="text-xs text-muted-foreground mt-1">
               All past-due tasks
             </p>
@@ -75,7 +103,7 @@ export const ArchivedTasks = ({ projects = [] }: ArchivedTasksProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.total_completed}</div>
+            <div className="text-3xl font-bold">{computedStats.total_completed}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Tasks finished
             </p>
@@ -90,7 +118,7 @@ export const ArchivedTasks = ({ projects = [] }: ArchivedTasksProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.total_incomplete}</div>
+            <div className="text-3xl font-bold">{computedStats.total_incomplete}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Tasks not done
             </p>
@@ -105,7 +133,7 @@ export const ArchivedTasks = ({ projects = [] }: ArchivedTasksProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.avg_days_past_due}</div>
+            <div className="text-3xl font-bold">{computedStats.avg_days_past_due}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Average delay before archive
             </p>
@@ -115,7 +143,7 @@ export const ArchivedTasks = ({ projects = [] }: ArchivedTasksProps) => {
 
       {/* Archived tasks list */}
       <div className="space-y-4">
-        {archivedTasks.length === 0 ? (
+        {filteredArchivedTasks.length === 0 ? (
           <Card>
             <CardHeader>
               <CardTitle>No archived tasks</CardTitle>
@@ -123,7 +151,7 @@ export const ArchivedTasks = ({ projects = [] }: ArchivedTasksProps) => {
             </CardHeader>
           </Card>
         ) : (
-          archivedTasks.map((task) => (
+          filteredArchivedTasks.map((task) => (
             <Card key={task.id} className="border">
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between gap-4">
@@ -200,7 +228,7 @@ export const ArchivedTasks = ({ projects = [] }: ArchivedTasksProps) => {
         )}
       </div>
 
-      {archivedTasks.length > 0 && (
+      {filteredArchivedTasks.length > 0 && (
         <div className="flex justify-end">
           <AlertDialog>
             <AlertDialogTrigger asChild>

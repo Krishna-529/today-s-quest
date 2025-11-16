@@ -98,9 +98,10 @@ const Index = () => {
     // Filter by project if selected
     if (selectedProject) {
       filtered = filtered.filter((task) => task.project_tags?.includes(selectedProject));
-    } 
-    // Otherwise filter by view mode
-    else if (viewMode === "today") {
+    }
+
+    // Apply viewMode date filters (apply even when a project is selected)
+    if (viewMode === "today") {
       const today = getISTDateString();
       filtered = filtered.filter((task) => normalizeDate(task.dueDate) === today);
     } else if (viewMode === "tomorrow") {
@@ -443,7 +444,7 @@ const Index = () => {
 
             {viewMode === "calendar" ? (
               <CalendarView
-                tasks={tasks}
+                tasks={filteredTasks}
                 onToggle={handleToggleTask}
                 onEdit={handleEditTask}
                 onDelete={handleDeleteTask}
@@ -451,7 +452,7 @@ const Index = () => {
                 projects={projects}
               />
             ) : viewMode === "archived" ? (
-              <ArchivedTasks projects={projects} />
+              <ArchivedTasks projects={projects} selectedProjectId={selectedProject ?? undefined} />
             ) : (
               <>
                 {/* New Task Button - Only show on desktop */}
@@ -460,16 +461,12 @@ const Index = () => {
                     <Button 
                       onClick={() => {
                         // Auto-set date based on current view mode
-                        if (!selectedProject) {
-                          if (viewMode === "today") {
-                            const today = getISTDateString();
-                            setPresetDate(today);
-                          } else if (viewMode === "tomorrow") {
-                            const tomorrow = new Date(new Date(getISTDateString()).getTime() + 86400000).toISOString().split("T")[0];
-                            setPresetDate(tomorrow);
-                          } else {
-                            setPresetDate(null);
-                          }
+                        if (viewMode === "today") {
+                          const today = getISTDateString();
+                          setPresetDate(today);
+                        } else if (viewMode === "tomorrow") {
+                          const tomorrow = new Date(new Date(getISTDateString()).getTime() + 86400000).toISOString().split("T")[0];
+                          setPresetDate(tomorrow);
                         } else {
                           setPresetDate(null);
                         }
@@ -522,6 +519,7 @@ const Index = () => {
           editTask={editingTask}
           projects={projects}
           presetDate={presetDate}
+          presetProjectId={selectedProject}
         />
 
         {/* Mobile Floating Action Button */}
@@ -531,16 +529,12 @@ const Index = () => {
             className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-[0_8px_16px_rgba(0,0,0,0.12)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.16)] hover:scale-105 active:scale-95 transition-all duration-200 z-50"
             onClick={() => {
               // Auto-set date based on current view mode
-              if (!selectedProject) {
-                if (viewMode === "today") {
-                  const today = getISTDateString();
-                  setPresetDate(today);
-                } else if (viewMode === "tomorrow") {
-                  const tomorrow = new Date(new Date(getISTDateString()).getTime() + 86400000).toISOString().split("T")[0];
-                  setPresetDate(tomorrow);
-                } else {
-                  setPresetDate(null);
-                }
+              if (viewMode === "today") {
+                const today = getISTDateString();
+                setPresetDate(today);
+              } else if (viewMode === "tomorrow") {
+                const tomorrow = new Date(new Date(getISTDateString()).getTime() + 86400000).toISOString().split("T")[0];
+                setPresetDate(tomorrow);
               } else {
                 setPresetDate(null);
               }
