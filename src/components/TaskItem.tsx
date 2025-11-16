@@ -98,7 +98,7 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete, onPin, projects = [
                     <Tag className="w-3 h-3" />
                     <span>{project.name}</span>
                     <div
-                      className="w-2 h-2 rounded-full"
+                      className="w-2 h-2 rounded-full border border-black/10"
                       style={{ backgroundColor: project.color }}
                     />
                   </span>

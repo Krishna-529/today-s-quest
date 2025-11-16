@@ -8,41 +8,41 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Ultra-calm, muted color palette */
-    --background: 210 25% 98%;
-    --foreground: 220 8% 35%;
+    /* Zen Pastel + Soft Neutrals - Apple Notes x Notion vibes */
+    --background: 150 25% 98%;      /* #F8FAF9 - off-white with sage hint */
+    --foreground: 195 21% 24%;      /* #2F3E46 - deep slate */
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 8% 35%;
+    --card: 0 0% 100%;              /* #FFFFFF - pure white */
+    --card-foreground: 195 21% 24%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 8% 35%;
+    --popover-foreground: 195 21% 24%;
 
-    /* Soft, muted blue */
-    --primary: 210 35% 75%;
-    --primary-foreground: 220 8% 20%;
+    /* Sage green primary - the heart of the palette */
+    --primary: 159 21% 51%;         /* #6B9080 - sage green */
+    --primary-foreground: 0 0% 100%;
 
-    /* Gentle sage green */
-    --secondary: 150 25% 75%;
-    --secondary-foreground: 220 8% 30%;
+    /* Light sage accent */
+    --secondary: 154 23% 70%;       /* #A4C3B2 - light sage */
+    --secondary-foreground: 195 21% 24%;
 
-    --muted: 210 15% 95%;
-    --muted-foreground: 220 8% 55%;
+    --muted: 150 16% 96%;           /* #F3F5F4 - sidebar tint */
+    --muted-foreground: 195 14% 47%; /* #6D7F86 - secondary text */
 
-    --accent: 150 25% 80%;
-    --accent-foreground: 220 8% 30%;
+    --accent: 154 23% 70%;          /* #A4C3B2 - light sage */
+    --accent-foreground: 195 21% 24%;
 
-    --destructive: 0 35% 75%;
-    --destructive-foreground: 0 0% 20%;
+    --destructive: 0 50% 65%;
+    --destructive-foreground: 0 0% 100%;
 
-    /* Soft priority colors */
-    --priority-low: 150 30% 75%;
-    --priority-medium: 40 40% 75%;
-    --priority-high: 0 35% 75%;
+    /* Soft priority colors using palette pastels */
+    --priority-low: 154 23% 70%;    /* Light sage - calm */
+    --priority-medium: 39 100% 89%; /* #FFE3C8 - peach */
+    --priority-high: 16 100% 90%;   /* Coral tint */
 
-    --border: 220 10% 90%;
-    --input: 220 10% 92%;
-    --ring: 210 35% 75%;
+    --border: 150 12% 90%;
+    --input: 150 12% 92%;
+    --ring: 159 21% 51%;            /* Sage green ring */
 
     --radius: 1rem;
 

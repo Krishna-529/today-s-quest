@@ -322,13 +322,15 @@ const Index = () => {
                 onSelectProject={setSelectedProject}
                 onAddProject={handleAddProject}
                 onDeleteProject={handleDeleteProject}
+                viewMode={viewMode === "calendar" || viewMode === "archived" ? "all" : viewMode}
+                onViewModeChange={(mode) => setViewMode(mode)}
               />
             </div>
           )}
 
           <div className={isMobile ? "col-span-1" : "lg:col-span-3"}>
-            {/* View Mode Selector and Completion Filter - Only show on desktop when no project is selected */}
-            {!isMobile && !selectedProject && (
+            {/* View Mode Selector and Completion Filter */}
+            {!isMobile && (
               <div className="mb-6 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   {/* Segmented Control for Time Filters */}

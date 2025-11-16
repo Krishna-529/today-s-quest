@@ -21,12 +21,12 @@ interface MobileProjectsDropdownProps {
 }
 
 const colors = [
-  "hsl(210, 70%, 65%)",
-  "hsl(150, 50%, 65%)",
-  "hsl(40, 80%, 70%)",
-  "hsl(0, 70%, 70%)",
-  "hsl(280, 60%, 70%)",
-  "hsl(180, 50%, 65%)",
+  "#D9C8FF", // Lavender
+  "#FFE3C8", // Peach
+  "#CCF2D1", // Mint
+  "#C8F0F6", // Aqua
+  "#D1E6FF", // Sky Blue
+  "#FFF4C2", // Sand Yellow
 ];
 
 export const MobileProjectsDropdown = ({

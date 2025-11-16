@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Project } from "@/types";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Plus, Folder, Trash2 } from "lucide-react";
+import { Plus, Folder, Trash2, Calendar, Clock, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ProjectsPanelProps {
@@ -11,15 +11,17 @@ interface ProjectsPanelProps {
   onSelectProject: (id: string | null) => void;
   onAddProject: (name: string, color: string) => void;
   onDeleteProject: (id: string) => void;
+  viewMode?: "today" | "tomorrow" | "all" | "upcoming" | "calendar" | "archived";
+  onViewModeChange?: (mode: "today" | "tomorrow" | "all" | "upcoming" | "calendar" | "archived") => void;
 }
 
 const colors = [
-  "hsl(210, 70%, 65%)",
-  "hsl(150, 50%, 65%)",
-  "hsl(40, 80%, 70%)",
-  "hsl(0, 70%, 70%)",
-  "hsl(280, 60%, 70%)",
-  "hsl(180, 50%, 65%)",
+  "#D9C8FF", // Lavender
+  "#FFE3C8", // Peach
+  "#CCF2D1", // Mint
+  "#C8F0F6", // Aqua
+  "#D1E6FF", // Sky Blue
+  "#FFF4C2", // Sand Yellow
 ];
 
 export const ProjectsPanel = ({
@@ -28,6 +30,8 @@ export const ProjectsPanel = ({
   onSelectProject,
   onAddProject,
   onDeleteProject,
+  viewMode,
+  onViewModeChange,
 }: ProjectsPanelProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
@@ -115,7 +119,7 @@ export const ProjectsPanel = ({
           <div
             key={project.id}
             className={cn(
-              "group flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200",
+              "group flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg transition-all duration-200",
               selectedProject === project.id
                 ? "bg-primary/10 shadow-sm"
                 : "hover:bg-muted/50"
@@ -123,10 +127,10 @@ export const ProjectsPanel = ({
           >
             <button
               onClick={() => onSelectProject(project.id)}
-              className="flex items-center gap-2 flex-1 text-left"
+              className="flex items-center gap-2 flex-1 text-left min-w-0"
             >
               <div
-                className="w-3 h-3 rounded-full transition-transform group-hover:scale-110"
+                className="w-3 h-3 rounded-full transition-transform group-hover:scale-110 border border-black/10 flex-shrink-0"
                 style={{ backgroundColor: project.color }}
               />
               <span className={cn(
@@ -139,7 +143,7 @@ export const ProjectsPanel = ({
             <Button
               size="icon"
               variant="ghost"
-              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-background"
+              className="h-6 w-6 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-background"
               onClick={() => onDeleteProject(project.id)}
             >
               <Trash2 className="w-3 h-3" />
