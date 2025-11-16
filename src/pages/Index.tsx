@@ -28,6 +28,7 @@ import {
 import { Plus, ListTodo, Calendar as CalendarIcon, LogOut, Archive, Menu, Check } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getISTDateString, normalizeDate } from "@/lib/dateUtils";
+import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileProjectsDropdown } from "@/components/MobileProjectsDropdown";
 import { cn } from "@/lib/utils";
@@ -152,11 +153,13 @@ const Index = () => {
 
   const filteredTasks = getFilteredTasks();
 
-  const handleAddTask = (taskData: Partial<Task>) => {
+  const handleSubmitTask = (taskData: Partial<Task>) => {
     if (editingTask) {
       updateTask({ id: editingTask.id, ...taskData });
+      toast.success("Task updated");
     } else {
       addTask(taskData);
+      toast.success("Task created");
     }
     setIsFormOpen(false);
     setEditingTask(null);
@@ -169,6 +172,28 @@ const Index = () => {
 
   const handlePinTask = (id: string, scope: "today" | "yesterday" | "all" | null) => {
     pinTask({ id, scope });
+    if (scope) {
+      toast.success(`Task pinned to ${scope}`);
+    } else {
+      toast.success("Task unpinned");
+    }
+  };
+
+  const handleDeleteTask = (id: string) => {
+    deleteTask(id);
+    toast.success("Task deleted");
+  };
+
+  const handleToggleTask = (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    toggleTask(id);
+    if (task) {
+      if (task.completed) {
+        toast.success("Task marked incomplete");
+      } else {
+        toast.success("Task completed!");
+      }
+    }
   };
 
   const handleDeleteProject = (id: string) => {
@@ -182,6 +207,17 @@ const Index = () => {
       setSelectedProject(null);
     }
     deleteProject(id);
+    toast.success("Project deleted");
+  };
+
+  const handleAddProject = (name: string, color: string) => {
+    addProject({ name, color });
+    toast.success("Project created");
+  };
+
+  const handleArchivePastDue = () => {
+    archivePastDueTasks();
+    toast.success("Past due tasks archived");
   };
 
   const handleSignOut = async () => {
@@ -218,35 +254,48 @@ const Index = () => {
                 onCompletionFilterChange={(filter) => {
                   setCompletionFilter(filter);
                 }}
-                onArchive={archivePastDueTasks}
+                onArchive={handleArchivePastDue}
                 onSignOut={handleSignOut}
                 isArchiving={isArchiving}
               />
             )}
             <div>
-              <h1 className="text-xl md:text-5xl font-bold text-foreground mb-0.5 md:mb-3 tracking-tight">
+              <h1 className="text-xl md:text-[28px] font-semibold text-foreground mb-1 md:mb-2 tracking-tight">
                 Every minute counts
               </h1>
-              <p className="text-xs md:text-lg text-muted-foreground">
+              <p className="text-xs md:text-base text-muted-foreground">
                 Organize your tasks with calm and clarity
               </p>
             </div>
           </div>
           {/* Desktop Actions */}
-          <div className="hidden md:flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => archivePastDueTasks()} 
-              disabled={isArchiving}
-              className="md:h-10"
-            >
-              {isArchiving ? "Archiving..." : "Archive Past Due"}
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleSignOut} className="md:h-10">
-              <LogOut className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
-              <span className="hidden md:inline">Sign Out</span>
-            </Button>
+          <div className="hidden md:flex gap-2 items-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="rounded-full h-10 w-10">
+                  <div className="flex items-center justify-center w-full h-full text-sm font-medium">
+                    {user?.email?.charAt(0).toUpperCase() || 'U'}
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[200px] p-2">
+                <DropdownMenuItem
+                  onClick={handleArchivePastDue}
+                  disabled={isArchiving}
+                  className="cursor-pointer py-3 px-3 mb-1"
+                >
+                  <Archive className="w-4 h-4 mr-3" />
+                  {isArchiving ? "Archiving..." : "Archive Past Due"}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  className="cursor-pointer py-3 px-3"
+                >
+                  <LogOut className="w-4 h-4 mr-3" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
@@ -271,7 +320,7 @@ const Index = () => {
                 projects={projects}
                 selectedProject={selectedProject}
                 onSelectProject={setSelectedProject}
-                onAddProject={(name, color) => addProject({ name, color })}
+                onAddProject={handleAddProject}
                 onDeleteProject={handleDeleteProject}
               />
             </div>
@@ -280,48 +329,73 @@ const Index = () => {
           <div className={isMobile ? "col-span-1" : "lg:col-span-3"}>
             {/* View Mode Selector and Completion Filter - Only show on desktop when no project is selected */}
             {!isMobile && !selectedProject && (
-              <div className="mb-4 flex items-center justify-between gap-4">
-                <div className="flex gap-2 flex-wrap">
-                  <Button
-                    size="sm"
-                    variant={viewMode === "today" ? "default" : "outline"}
-                    onClick={() => setViewMode("today")}
-                  >
-                    Today
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={viewMode === "tomorrow" ? "default" : "outline"}
-                    onClick={() => setViewMode("tomorrow")}
-                  >
-                    Tomorrow
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={viewMode === "upcoming" ? "default" : "outline"}
-                    onClick={() => setViewMode("upcoming")}
-                  >
-                    Upcoming
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={viewMode === "all" ? "default" : "outline"}
-                    onClick={() => setViewMode("all")}
-                  >
-                    All
-                  </Button>
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  {/* Segmented Control for Time Filters */}
+                  <div className="inline-flex items-center bg-muted/50 rounded-lg p-1 gap-1">
+                    <Button
+                      size="sm"
+                      variant={viewMode === "today" ? "secondary" : "ghost"}
+                      onClick={() => setViewMode("today")}
+                      className={cn(
+                        "transition-all duration-200",
+                        viewMode === "today" && "shadow-sm"
+                      )}
+                    >
+                      Today
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={viewMode === "tomorrow" ? "secondary" : "ghost"}
+                      onClick={() => setViewMode("tomorrow")}
+                      className={cn(
+                        "transition-all duration-200",
+                        viewMode === "tomorrow" && "shadow-sm"
+                      )}
+                    >
+                      Tomorrow
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={viewMode === "upcoming" ? "secondary" : "ghost"}
+                      onClick={() => setViewMode("upcoming")}
+                      className={cn(
+                        "transition-all duration-200",
+                        viewMode === "upcoming" && "shadow-sm"
+                      )}
+                    >
+                      Upcoming
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={viewMode === "all" ? "secondary" : "ghost"}
+                      onClick={() => setViewMode("all")}
+                      className={cn(
+                        "transition-all duration-200",
+                        viewMode === "all" && "shadow-sm"
+                      )}
+                    >
+                      All
+                    </Button>
+                  </div>
+                  
+                  {/* View Toggle for Calendar */}
                   <Button
                     size="sm"
                     variant={viewMode === "calendar" ? "default" : "outline"}
                     onClick={() => setViewMode("calendar")}
+                    className="transition-all duration-200"
                   >
                     <CalendarIcon className="w-4 h-4 mr-2" />
                     Calendar
                   </Button>
+                  
+                  {/* Archived View */}
                   <Button
                     size="sm"
                     variant={viewMode === "archived" ? "default" : "outline"}
                     onClick={() => setViewMode("archived")}
+                    className="transition-all duration-200"
                   >
                     <Archive className="w-4 h-4 mr-2" />
                     Archived
@@ -334,7 +408,7 @@ const Index = () => {
                     <DropdownMenuTrigger asChild>
                       <Button size="sm" variant="outline" className="min-w-[160px] justify-start">
                         <ListTodo className="w-4 h-4 mr-2" />
-                        Filter: {completionFilter === "all" ? "All" : completionFilter === "incomplete" ? "Incomplete" : "Completed"}
+                        Show: {completionFilter === "all" ? "All" : completionFilter === "incomplete" ? "Incomplete" : "Completed"}
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-[200px] p-2">
@@ -368,9 +442,9 @@ const Index = () => {
             {viewMode === "calendar" ? (
               <CalendarView
                 tasks={tasks}
-                onToggle={toggleTask}
+                onToggle={handleToggleTask}
                 onEdit={handleEditTask}
-                onDelete={deleteTask}
+                onDelete={handleDeleteTask}
                 onPin={handlePinTask}
                 projects={projects}
               />
@@ -380,25 +454,28 @@ const Index = () => {
               <>
                 {/* New Task Button - Only show on desktop */}
                 {!isMobile && (
-                  <div className="flex justify-end mb-4">
-                    <Button onClick={() => {
-                      // Auto-set date based on current view mode
-                      if (!selectedProject) {
-                        if (viewMode === "today") {
-                          const today = getISTDateString();
-                          setPresetDate(today);
-                        } else if (viewMode === "tomorrow") {
-                          const tomorrow = new Date(new Date(getISTDateString()).getTime() + 86400000).toISOString().split("T")[0];
-                          setPresetDate(tomorrow);
+                  <div className="flex justify-end mb-6">
+                    <Button 
+                      onClick={() => {
+                        // Auto-set date based on current view mode
+                        if (!selectedProject) {
+                          if (viewMode === "today") {
+                            const today = getISTDateString();
+                            setPresetDate(today);
+                          } else if (viewMode === "tomorrow") {
+                            const tomorrow = new Date(new Date(getISTDateString()).getTime() + 86400000).toISOString().split("T")[0];
+                            setPresetDate(tomorrow);
+                          } else {
+                            setPresetDate(null);
+                          }
                         } else {
                           setPresetDate(null);
                         }
-                      } else {
-                        setPresetDate(null);
-                      }
-                      setIsFormOpen(true);
-                    }}>
-                      <Plus className="w-4 h-4 mr-2" />
+                        setIsFormOpen(true);
+                      }}
+                      className="h-11 px-6 text-base shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
+                    >
+                      <Plus className="w-5 h-5 mr-2" />
                       New Task
                     </Button>
                   </div>
@@ -406,9 +483,9 @@ const Index = () => {
 
                 <DraggableTaskList
                   tasks={filteredTasks}
-                  onToggle={toggleTask}
+                  onToggle={handleToggleTask}
                   onEdit={handleEditTask}
-                  onDelete={deleteTask}
+                  onDelete={handleDeleteTask}
                   onPin={handlePinTask}
                   onReorder={(newTasks) => {
                     const key = selectedProject
@@ -439,7 +516,7 @@ const Index = () => {
             setEditingTask(null);
             setPresetDate(null);
           }}
-          onSubmit={handleAddTask}
+          onSubmit={handleSubmitTask}
           editTask={editingTask}
           projects={projects}
           presetDate={presetDate}
@@ -449,7 +526,7 @@ const Index = () => {
         {isMobile && (
           <Button
             size="lg"
-            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50"
+            className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-[0_8px_16px_rgba(0,0,0,0.12)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.16)] hover:scale-105 active:scale-95 transition-all duration-200 z-50"
             onClick={() => {
               // Auto-set date based on current view mode
               if (!selectedProject) {
@@ -468,7 +545,7 @@ const Index = () => {
               setIsFormOpen(true);
             }}
           >
-            <Plus className="h-6 w-6" />
+            <Plus className="h-7 w-7" />
           </Button>
         )}
       </div>

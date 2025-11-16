@@ -46,12 +46,28 @@ All colors MUST be HSL.
 
     --radius: 1rem;
 
+    /* Consistent spacing scale */
+    --space-1: 0.25rem;  /* 4px */
+    --space-2: 0.5rem;   /* 8px */
+    --space-3: 0.75rem;  /* 12px */
+    --space-4: 1rem;     /* 16px */
+    --space-6: 1.5rem;   /* 24px */
+    --space-8: 2rem;     /* 32px */
+    --space-12: 3rem;    /* 48px */
+
+    /* Typography scale */
+    --text-h1: 1.75rem;      /* 28px */
+    --text-h2: 1.25rem;      /* 20px */
+    --text-body: 0.875rem;   /* 14px */
+    --text-small: 0.75rem;   /* 12px */
+
     /* Ultra-smooth transitions */
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     
     /* Barely-there shadows */
-    --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.02);
-    --shadow-medium: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.08);
     --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.06);
   }
 }
