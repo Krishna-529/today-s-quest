@@ -4,6 +4,17 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Plus, Folder, Trash2, Calendar, Clock, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
 
 interface ProjectsPanelProps {
   projects: Project[];
@@ -140,14 +151,31 @@ export const ProjectsPanel = ({
                   : "text-foreground/80 group-hover:text-foreground"
               )}>{project.name}</span>
             </button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-6 w-6 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-background"
-              onClick={() => onDeleteProject(project.id)}
-            >
-              <Trash2 className="w-3 h-3" />
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-background"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete project?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will delete the project "{project.name}" and all tasks that only belong to this project. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => onDeleteProject(project.id)}>
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         ))}
       </div>
