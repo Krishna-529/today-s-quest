@@ -45,10 +45,6 @@ export const ArchivedTasks = ({ projects = [] }: ArchivedTasksProps) => {
     );
   }
 
-  const getProjectsForTask = (task: ArchivedTask) => {
-    return projects.filter((p) => task.project_tags?.includes(p.id));
-  };
-
   return (
     <div className="space-y-6">
       {/* Statistics Cards */}
@@ -166,8 +162,6 @@ export const ArchivedTasks = ({ projects = [] }: ArchivedTasksProps) => {
       ) : (
         <div className="space-y-3">
           {archivedTasks.map((task) => {
-            const taskProjects = getProjectsForTask(task);
-            
             return (
               <Card key={task.id} className="overflow-hidden">
                 <CardContent className="p-6">
@@ -221,18 +215,14 @@ export const ArchivedTasks = ({ projects = [] }: ArchivedTasksProps) => {
                           {task.priority}
                         </span>
 
-                        {taskProjects.length > 0 && (
+                        {task.project_names && task.project_names.length > 0 && (
                           <div className="flex items-center gap-1 flex-wrap">
-                            {taskProjects.map((project) => (
+                            {task.project_names.map((name, idx) => (
                               <span
-                                key={project.id}
+                                key={idx}
                                 className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted"
                               >
-                                <span>{project.name}</span>
-                                <div
-                                  className="w-2 h-2 rounded-full"
-                                  style={{ backgroundColor: project.color }}
-                                />
+                                <span>{name}</span>
                               </span>
                             ))}
                           </div>

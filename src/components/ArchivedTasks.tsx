@@ -37,8 +37,13 @@ export const ArchivedTasks = ({ projects = [], selectedProjectId }: ArchivedTask
     clearAllArchivedTasks,
   } = useArchivedTasks();
 
-  const filteredArchivedTasks = selectedProjectId
-    ? archivedTasks.filter((t) => t.project_tags?.includes(selectedProjectId))
+  // Find the selected project name
+  const selectedProjectName = selectedProjectId 
+    ? projects.find(p => p.id === selectedProjectId)?.name 
+    : null;
+
+  const filteredArchivedTasks = selectedProjectName
+    ? archivedTasks.filter((t) => t.project_names?.includes(selectedProjectName))
     : archivedTasks;
 
   const computedStats = {
@@ -71,10 +76,6 @@ export const ArchivedTasks = ({ projects = [], selectedProjectId }: ArchivedTask
       </div>
     );
   }
-
-  const getProjectsForTask = (task: ArchivedTask) => {
-    return projects.filter((p) => task.project_tags?.includes(p.id));
-  };
 
   return (
     <div className="space-y-6">
@@ -191,9 +192,11 @@ export const ArchivedTasks = ({ projects = [], selectedProjectId }: ArchivedTask
                         </span>
                       </div>
 
-                      {getProjectsForTask(task).map((p) => (
-                        <Badge key={p.id} variant="secondary">{p.name}</Badge>
-                      ))}
+                      {task.project_names && task.project_names.length > 0 && (
+                        task.project_names.map((name, idx) => (
+                          <Badge key={idx} variant="secondary">{name}</Badge>
+                        ))
+                      )}
                     </div>
                   </div>
 

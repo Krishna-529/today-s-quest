@@ -15,13 +15,17 @@ export function useProjects() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-
-      return data.map((project) => ({
+      // Map and default active=true if column missing (backward compatible)
+      const mapped = data.map((project) => ({
         id: project.id,
         name: project.name,
         color: project.color,
         createdAt: project.created_at,
+        active: project.active ?? true,
       })) as Project[];
+
+      // Only return active projects for UI
+      return mapped.filter(p => p.active !== false);
     },
   });
 
@@ -34,6 +38,7 @@ export function useProjects() {
         user_id: user.id,
         name,
         color,
+        active: true,
       });
 
       if (error) throw error;
@@ -50,7 +55,11 @@ export function useProjects() {
 
   const deleteProject = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("projects").delete().eq("id", id);
+      // Soft-delete: mark project inactive instead of deleting
+      const { error } = await supabase
+        .from("projects")
+        .update({ active: false })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

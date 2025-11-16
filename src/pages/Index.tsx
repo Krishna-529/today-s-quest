@@ -198,18 +198,7 @@ const Index = () => {
   };
 
   const handleDeleteProject = (id: string) => {
-    // Remove the project tag from all tasks that have it
-    const tasksWithProject = tasks.filter(task => 
-      task.project_tags?.includes(id)
-    );
-    tasksWithProject.forEach(task => {
-      const updatedTags = task.project_tags?.filter(tagId => tagId !== id);
-      updateTask({ 
-        id: task.id, 
-        project_tags: updatedTags && updatedTags.length > 0 ? updatedTags : undefined 
-      });
-    });
-    
+    // Clear selected project if it's the one being deleted
     if (selectedProject === id) {
       setSelectedProject(null);
     }

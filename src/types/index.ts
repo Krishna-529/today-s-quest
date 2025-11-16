@@ -24,6 +24,7 @@ export interface ArchivedTask {
   priority: Priority;
   completed: boolean;
   project_tags?: string[];
+  project_names?: string[]; // Copied project names at time of archiving
   created_at: string;
   moved_at: string;
   days_past_due: number;
@@ -44,4 +45,5 @@ export interface Project {
   name: string;
   color: string;
   createdAt: string;
+  active?: boolean;
 }

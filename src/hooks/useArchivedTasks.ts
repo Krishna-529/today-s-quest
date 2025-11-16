@@ -17,19 +17,46 @@ export function useArchivedTasks() {
 
       if (error) throw error;
 
-      return (data || []).map((task) => ({
-        id: task.id,
-        original_task_id: task.original_task_id,
-        title: task.title,
-        description: task.description,
-        due_date: task.due_date,
-        priority: task.priority as "low" | "medium" | "high",
-        completed: task.completed,
-        project_tags: task.project_tags || [],
-        created_at: task.created_at,
-        moved_at: task.moved_at,
-        days_past_due: task.days_past_due || 0,
-      })) as ArchivedTask[];
+      // Also fetch all projects (including inactive) to backfill names
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth?.user?.id;
+      let projectMap: Map<string, string> = new Map();
+      if (userId) {
+        const { data: projectsAll, error: projErr } = await supabase
+          .from("projects")
+          .select("id,name")
+          .eq("user_id", userId);
+        if (projErr) {
+          // Don't fail the whole query if projects fetch fails
+          projectMap = new Map();
+        } else {
+          projectMap = new Map((projectsAll || []).map((p) => [p.id as string, p.name as string]));
+        }
+      }
+
+      return (data || []).map((task) => {
+        const tags: string[] = task.project_tags || [];
+        const namesFromRow: string[] = task.project_names || [];
+        const namesBackfill: string[] = tags
+          .map((id: string) => projectMap.get(id))
+          .filter((n): n is string => !!n);
+
+        return {
+          id: task.id,
+          original_task_id: task.original_task_id,
+          title: task.title,
+          description: task.description,
+          due_date: task.due_date,
+          priority: task.priority as "low" | "medium" | "high",
+          completed: task.completed,
+          project_tags: tags,
+          // Prefer stored names; fallback to lookup including inactive projects
+          project_names: namesFromRow.length > 0 ? namesFromRow : namesBackfill,
+          created_at: task.created_at,
+          moved_at: task.moved_at,
+          days_past_due: task.days_past_due || 0,
+        } as ArchivedTask;
+      });
     },
   });
 
@@ -87,11 +114,83 @@ export function useArchivedTasks() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase.rpc("archive_past_due_tasks", {
-        p_user_id: user.id,
-      });
-      if (error) throw error;
-      return data;
+      // Fetch all tasks
+      const { data: tasks, error: tasksError } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (tasksError) throw tasksError;
+
+      // Fetch all projects to map IDs to names
+      const { data: projects, error: projectsError } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (projectsError) throw projectsError;
+
+      // Create a map of project ID to name
+      const projectMap = new Map(projects?.map(p => [p.id, p.name]) || []);
+
+      // Get today's date in IST
+      const today = new Date();
+      const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+      const istDate = new Date(today.getTime() + istOffset);
+      const todayStr = istDate.toISOString().split("T")[0];
+
+      // Filter past-due tasks
+      const pastDueTasks = tasks?.filter((task) => {
+        if (!task.due_date) return false;
+        const dueDate = new Date(task.due_date).toISOString().split("T")[0];
+        return dueDate < todayStr;
+      }) || [];
+
+      if (pastDueTasks.length === 0) {
+        return 0;
+      }
+
+      // Archive each task with project names copied (no project IDs stored)
+      for (const task of pastDueTasks) {
+        const movedAt = new Date().toISOString();
+        const dueDate = new Date(task.due_date);
+        const daysPastDue = Math.floor((Date.now() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        // Map project IDs to names
+        const projectNames = (task.project_tags || [])
+          .map(id => projectMap.get(id))
+          .filter(name => name !== undefined) as string[];
+
+        // Insert into archived_tasks (store both IDs and names)
+        const { error: insertError } = await supabase
+          .from("archived_tasks")
+          .insert({
+            user_id: user.id,
+            original_task_id: task.id,
+            title: task.title,
+            description: task.description,
+            due_date: task.due_date,
+            priority: task.priority,
+            completed: task.completed,
+            project_tags: task.project_tags || [],
+            project_names: projectNames,
+            created_at: task.created_at,
+            moved_at: movedAt,
+            days_past_due: daysPastDue,
+          });
+
+        if (insertError) throw insertError;
+
+        // Delete from tasks
+        const { error: deleteError } = await supabase
+          .from("tasks")
+          .delete()
+          .eq("id", task.id);
+
+        if (deleteError) throw deleteError;
+      }
+
+      return pastDueTasks.length;
     },
     onSuccess: (movedCount) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
