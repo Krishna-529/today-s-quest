@@ -198,11 +198,17 @@ const Index = () => {
   };
 
   const handleDeleteProject = (id: string) => {
-    // Delete tasks that only have this project
-    const tasksToDelete = tasks.filter(task => 
-      task.project_tags?.length === 1 && task.project_tags[0] === id
+    // Remove the project tag from all tasks that have it
+    const tasksWithProject = tasks.filter(task => 
+      task.project_tags?.includes(id)
     );
-    tasksToDelete.forEach(task => deleteTask(task.id));
+    tasksWithProject.forEach(task => {
+      const updatedTags = task.project_tags?.filter(tagId => tagId !== id);
+      updateTask({ 
+        id: task.id, 
+        project_tags: updatedTags && updatedTags.length > 0 ? updatedTags : undefined 
+      });
+    });
     
     if (selectedProject === id) {
       setSelectedProject(null);
