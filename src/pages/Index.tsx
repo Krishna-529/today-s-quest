@@ -56,26 +56,11 @@ const Index = () => {
     }
   }, [user, authLoading, navigate]);
 
-  // Auto-archive past-due tasks on mount
-  const initialArchiveRef = useRef(false);
-  useEffect(() => {
-    if (
-      !authLoading &&
-      !tasksLoading &&
-      !projectsLoading &&
-      user &&
-      !initialArchiveRef.current
-    ) {
-      // Trigger server-side archive function
-      try {
-        archivePastDueTasks();
-      } catch (err) {
-        // ignore - mutation logs errors internally
-      }
-      initialArchiveRef.current = true;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, tasksLoading, projectsLoading, user]);
+  // Auto-archive on mount was removed to avoid unexpected background
+  // operations that run without explicit user intent. Archiving is
+  // still available via the UI control ("Archive Past Due") and the
+  // dropdown action which calls `archivePastDueTasks()` when the user
+  // explicitly requests it.
 
 
 
