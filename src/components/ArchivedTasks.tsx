@@ -46,6 +46,27 @@ export const ArchivedTasks = ({ projects = [], selectedProjectId }: ArchivedTask
     ? archivedTasks.filter((t) => t.project_names?.includes(selectedProjectName))
     : archivedTasks;
 
+  // Group tasks by archive date (moved_at)
+  const groupedByDate = filteredArchivedTasks.reduce((acc, task) => {
+    const dateKey = new Date(task.moved_at).toLocaleDateString('en-IN', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric' 
+    });
+    if (!acc[dateKey]) {
+      acc[dateKey] = [];
+    }
+    acc[dateKey].push(task);
+    return acc;
+  }, {} as Record<string, ArchivedTask[]>);
+
+  // Sort dates in descending order (most recent first)
+  const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
+    const dateA = new Date(a.split('/').reverse().join('-'));
+    const dateB = new Date(b.split('/').reverse().join('-'));
+    return dateB.getTime() - dateA.getTime();
+  });
+
   const computedStats = {
     total_archived: filteredArchivedTasks.length,
     total_completed: filteredArchivedTasks.filter((t) => t.completed).length,
@@ -143,7 +164,7 @@ export const ArchivedTasks = ({ projects = [], selectedProjectId }: ArchivedTask
       </div>
 
       {/* Archived tasks list */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         {filteredArchivedTasks.length === 0 ? (
           <Card>
             <CardHeader>
@@ -152,81 +173,87 @@ export const ArchivedTasks = ({ projects = [], selectedProjectId }: ArchivedTask
             </CardHeader>
           </Card>
         ) : (
-          filteredArchivedTasks.map((task) => (
-            <Card key={task.id} className="border">
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-foreground">{task.title}</span>
-                      <span className={cn(
-                        "text-xs px-2 py-0.5 rounded-full border font-medium",
-                        task.completed 
-                          ? "bg-green-500/10 text-green-600 border-green-500/20" 
-                          : "bg-orange-500/10 text-orange-600 border-orange-500/20"
-                      )}>
-                        {task.completed ? '✓ Completed' : '⚠ Incomplete'}
-                      </span>
-                      <span className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", priorityColors[task.priority])}>
-                        {task.priority}
-                      </span>
-                    </div>
-                    {task.description && (
-                      <p className="text-sm text-muted-foreground">{task.description}</p>
-                    )}
+          sortedDates.map((dateKey) => (
+            <div key={dateKey} className="space-y-3">
+              {/* Date Header */}
+              <div className="flex items-center gap-3">
+                <h3 className="text-lg font-semibold text-foreground">{dateKey}</h3>
+                <div className="h-px flex-1 bg-border"></div>
+              </div>
 
-                    <div className="flex flex-wrap items-center gap-3">
-                      {task.due_date && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Calendar className="w-3 h-3" />
-                          <span>
-                            Due: {new Date(task.due_date).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                          </span>
+              {/* Tasks for this date */}
+              <div className="space-y-3">
+                {groupedByDate[dateKey].map((task) => (
+                  <Card key={task.id} className="border">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium text-foreground">{task.title}</span>
+                            <span className={cn(
+                              "text-xs px-2 py-0.5 rounded-full border font-medium",
+                              task.completed 
+                                ? "bg-green-500/10 text-green-600 border-green-500/20" 
+                                : "bg-orange-500/10 text-orange-600 border-orange-500/20"
+                            )}>
+                              {task.completed ? '✓ Completed' : '⚠ Incomplete'}
+                            </span>
+                            <span className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", priorityColors[task.priority])}>
+                              {task.priority}
+                            </span>
+                          </div>
+                          {task.description && (
+                            <p className="text-sm text-muted-foreground">{task.description}</p>
+                          )}
+
+                          <div className="flex flex-wrap items-center gap-3">
+                            {task.due_date && (
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Calendar className="w-3 h-3" />
+                                <span>
+                                  Due: {new Date(task.due_date).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                </span>
+                              </div>
+                            )}
+
+                            {task.project_names && task.project_names.length > 0 && (
+                              task.project_names.map((name, idx) => (
+                                <Badge key={idx} variant="secondary">{name}</Badge>
+                              ))
+                            )}
+                          </div>
                         </div>
-                      )}
 
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="w-3 h-3" />
-                        <span>
-                          Moved: {new Date(task.moved_at).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm" className="text-destructive">
+                                <Trash2 className="w-4 h-4" />
+                                <span className="sr-only">Delete</span>
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete archived task?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => deleteArchivedTask(task.id)}>
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
-
-                      {task.project_names && task.project_names.length > 0 && (
-                        task.project_names.map((name, idx) => (
-                          <Badge key={idx} variant="secondary">{name}</Badge>
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="sm" className="text-destructive">
-                          <Trash2 className="w-4 h-4" />
-                          <span className="sr-only">Delete</span>
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete archived task?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteArchivedTask(task.id)}>
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
           ))
         )}
       </div>

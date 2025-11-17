@@ -37,11 +37,13 @@ const Auth = () => {
         toast.success("Logged in successfully");
         navigate("/");
       } else {
+        const redirectUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
+        
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: import.meta.env.VITE_REDIRECT_URL,
+            emailRedirectTo: redirectUrl,
           },
         });
         if (error) throw error;
@@ -57,10 +59,13 @@ const Auth = () => {
 
   const handleGoogleAuth = async () => {
     try {
+      // Use the current window location as the redirect URL
+      const redirectUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: import.meta.env.VITE_REDIRECT_URL,
+          redirectTo: redirectUrl,
         },
       });
       if (error) throw error;
