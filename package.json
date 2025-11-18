@@ -8,7 +8,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate:favicon": "png-to-ico public/icons/icon-512x512.png public/icons/icon-192x192.png > public/favicon.ico"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
