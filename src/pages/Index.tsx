@@ -493,7 +493,7 @@ const Index = () => {
                   </div>
                 )}
 
-                <div className="pop-in">
+                <div key={`${viewMode}-${selectedProject}-${completionFilter}`} className="pop-in">
                   <DraggableTaskList
                     tasks={filteredTasks}
                     onToggle={handleToggleTask}
