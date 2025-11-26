@@ -62,7 +62,7 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete, onPin, projects = [
             {task.title}
           </h3>
           {task.description && (
-            <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
+            <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{task.description}</p>
           )}
 
           <div className="flex flex-wrap items-center gap-2 mt-2">

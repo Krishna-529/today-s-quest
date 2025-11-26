@@ -1,8 +1,11 @@
-import { ArchivedTask, Project } from "@/types";
+import { ArchivedTask, Note, Project } from "@/types";
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { fetchNotesByDate } from "@/lib/supabaseClient";
 import { useArchivedTasks } from "@/hooks/useArchivedTasks";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
-import { Calendar, Clock, Trash2, AlertTriangle, TrendingUp, Check, Archive } from "lucide-react";
+import { Calendar, Trash2, AlertTriangle, TrendingUp, Check, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -29,9 +32,10 @@ const priorityColors = {
 };
 
 export const ArchivedTasks = ({ projects = [], selectedProjectId }: ArchivedTasksProps) => {
+  const { user } = useAuth();
+  const [notesMap, setNotesMap] = useState<Record<string, Note[]>>({});
   const {
     archivedTasks,
-    stats,
     isLoading,
     deleteArchivedTask,
     clearAllArchivedTasks,
@@ -61,11 +65,53 @@ export const ArchivedTasks = ({ projects = [], selectedProjectId }: ArchivedTask
   }, {} as Record<string, ArchivedTask[]>);
 
   // Sort dates in descending order (most recent first)
-  const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
-    const dateA = new Date(a.split('/').reverse().join('-'));
-    const dateB = new Date(b.split('/').reverse().join('-'));
-    return dateB.getTime() - dateA.getTime();
-  });
+  const sortedDates = useMemo(() => (
+    Object.keys(groupedByDate).sort((a, b) => {
+      const dateA = new Date(a.split('/').reverse().join('-'));
+      const dateB = new Date(b.split('/').reverse().join('-'));
+      return dateB.getTime() - dateA.getTime();
+    })
+  ), [groupedByDate]);
+
+  useEffect(() => {
+    if (!user || sortedDates.length === 0) {
+      setNotesMap({});
+      return;
+    }
+
+    const loadNotes = async () => {
+      const map: Record<string, Note[]> = {};
+      await Promise.all(sortedDates.map(async (displayDate) => {
+        const [day, month, year] = displayDate.split('/');
+        const iso = `${year}-${month}-${day}`;
+        const { data, error } = await fetchNotesByDate({ user_id: user.id, note_date: iso });
+        if (!error && data && data.length > 0) {
+          map[displayDate] = data;
+        }
+      }));
+      setNotesMap(map);
+    };
+
+    loadNotes();
+  }, [sortedDates, user]);
+
+  const formatISODate = (value?: string | null) => {
+    if (!value) return "All Time";
+    try {
+      return new Date(value).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch (e) {
+      return value;
+    }
+  };
+
+  const getProjectNameById = (projectId?: string | null) => {
+    if (!projectId) return null;
+    return projects.find((p) => p.id === projectId)?.name ?? null;
+  };
+
+  const getNoteProjectLabel = (note: Note) => {
+    return note.project_name ?? getProjectNameById(note.project_id) ?? "All Projects";
+  };
 
   const computedStats = {
     total_archived: filteredArchivedTasks.length,
@@ -180,6 +226,21 @@ export const ArchivedTasks = ({ projects = [], selectedProjectId }: ArchivedTask
                 <h3 className="text-lg font-semibold text-foreground">{dateKey}</h3>
                 <div className="h-px flex-1 bg-border"></div>
               </div>
+
+              {/* Notes for this date (if any) */}
+              {notesMap[dateKey] && notesMap[dateKey].length > 0 && (
+                <div className="mb-3 space-y-2">
+                  {notesMap[dateKey].map((note) => (
+                    <div key={note.id} className="rounded-lg border bg-muted/40 p-3">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>{getNoteProjectLabel(note)}</span>
+                        <span>{formatISODate(note.note_date)}</span>
+                      </div>
+                      <p className="mt-2 text-sm text-foreground whitespace-pre-line">{note.note_text || "(No text)"}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Tasks for this date */}
               <div className="space-y-3">

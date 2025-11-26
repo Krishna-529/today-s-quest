@@ -47,3 +47,15 @@ export interface Project {
   createdAt: string;
   active?: boolean;
 }
+
+export interface Note {
+  id: string;
+  user_id: string;
+  project_id?: string | null;
+  project_name?: string | null;
+  note_date: string | null;
+  scope_key: string;
+  note_text: string;
+  created_at: string;
+  updated_at: string;
+}

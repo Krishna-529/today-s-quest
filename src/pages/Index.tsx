@@ -5,8 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTasks } from "@/hooks/useTasks";
 import { useProjects } from "@/hooks/useProjects";
 import { useArchivedTasks } from "@/hooks/useArchivedTasks";
-// import { Dashboard } from "@/components/Dashboard";
 import { DraggableTaskList } from "@/components/DraggableTaskList";
+import NotesModal from "@/components/NotesModal";
 import { TaskForm } from "@/components/TaskForm";
 import { CalendarView } from "@/components/CalendarView";
 import { ArchivedTasks } from "@/components/ArchivedTasks";
@@ -25,7 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, ListTodo, Calendar as CalendarIcon, LogOut, Archive, Menu, Check } from "lucide-react";
+import { Plus, ListTodo, Calendar as CalendarIcon, LogOut, Archive, Menu, Check, FileText } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getISTDateString, normalizeDate } from "@/lib/dateUtils";
 import { toast } from "sonner";
@@ -49,6 +49,37 @@ const Index = () => {
   const [presetDate, setPresetDate] = useState<string | null>(null);
   const [taskOrderMap, setTaskOrderMap] = useState<Record<string, string[]>>({});
   const [currentTab, setCurrentTab] = useState<"tasks" | "archived">("tasks");
+  const [notesModalOpen, setNotesModalOpen] = useState(false);
+  const [notesModalMode, setNotesModalMode] = useState<"edit" | "view">("edit");
+  const [noteContext, setNoteContext] = useState<{ date: string | null; projectId: string | null; projectName: string | null } | null>(null);
+
+  const resolveNoteContext = () => {
+    const today = getISTDateString();
+    let date: string | null = null;
+    if (viewMode === "today") {
+      date = today;
+    } else if (viewMode === "tomorrow") {
+      date = new Date(new Date(today).getTime() + 86400000).toISOString().split("T")[0];
+    } else if (viewMode === "calendar" && presetDate) {
+      date = presetDate;
+    } else {
+      date = null;
+    }
+
+    const selectedProjectMeta = selectedProject ? projects.find((p) => p.id === selectedProject) : null;
+    return {
+      date,
+      projectId: selectedProject,
+      projectName: selectedProjectMeta?.name ?? null,
+    };
+  };
+
+  const handleOpenNotes = (mode: "edit" | "view" = "edit") => {
+    const ctx = resolveNoteContext();
+    setNoteContext(ctx);
+    setNotesModalMode(mode);
+    setNotesModalOpen(true);
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -205,12 +236,6 @@ const Index = () => {
     await signOut();
     navigate("/auth");
   };
-
-  // Commented out - used by Dashboard component
-  // const handleAddTaskForDate = (date: string) => {
-  //   setPresetDate(date);
-  //   setIsFormOpen(true);
-  // };
 
   return (
     <div className="min-h-screen bg-background">
@@ -435,9 +460,17 @@ const Index = () => {
               <ArchivedTasks projects={projects} selectedProjectId={selectedProject ?? undefined} />
             ) : (
               <>
-                {/* New Task Button - Only show on desktop */}
+                {/* Action Buttons - Only show on desktop */}
                 {!isMobile && (
-                  <div className="flex justify-end mb-6">
+                  <div className="flex justify-end gap-3 mb-6">
+                    <Button 
+                      onClick={() => handleOpenNotes("edit")}
+                      variant="outline"
+                      className="h-11 px-6 text-base shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 pop-in-delay-1"
+                    >
+                      <FileText className="w-5 h-5 mr-2" />
+                      Notes
+                    </Button>
                     <Button 
                       onClick={() => {
                         // Auto-set date based on current view mode
@@ -452,7 +485,7 @@ const Index = () => {
                         }
                         setIsFormOpen(true);
                       }}
-                      className="h-11 px-6 text-base shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200"
+                      className="h-11 px-6 text-base shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 pop-in-delay-2"
                     >
                       <Plus className="w-5 h-5 mr-2" />
                       New Task
@@ -460,33 +493,26 @@ const Index = () => {
                   </div>
                 )}
 
-                <DraggableTaskList
-                  tasks={filteredTasks}
-                  onToggle={handleToggleTask}
-                  onEdit={handleEditTask}
-                  onDelete={handleDeleteTask}
-                  onPin={handlePinTask}
-                  onReorder={(newTasks) => {
-                    const key = selectedProject
-                      ? `project:${selectedProject}|${completionFilter}`
-                      : `view:${viewMode}|${completionFilter}`;
-                    setTaskOrderMap((prev) => ({ ...prev, [key]: newTasks.map((t) => t.id) }));
-                  }}
-                  projects={projects}
-                />
+                <div className="pop-in">
+                  <DraggableTaskList
+                    tasks={filteredTasks}
+                    onToggle={handleToggleTask}
+                    onEdit={handleEditTask}
+                    onDelete={handleDeleteTask}
+                    onPin={handlePinTask}
+                    onReorder={(newTasks) => {
+                      const key = selectedProject
+                        ? `project:${selectedProject}|${completionFilter}`
+                        : `view:${viewMode}|${completionFilter}`;
+                      setTaskOrderMap((prev) => ({ ...prev, [key]: newTasks.map((t) => t.id) }));
+                    }}
+                    projects={projects}
+                  />
+                </div>
               </>
             )}
           </div>
         </div>
-
-        {/* Dashboard Stats - Commented out as requested */}
-        {/* <div className="mt-8 md:mt-12">
-          <Dashboard 
-            tasks={tasks} 
-            onAddTaskForDate={handleAddTaskForDate}
-            onViewUpcoming={() => setViewMode("upcoming")}
-          />
-        </div> */}
 
         <TaskForm
           open={isFormOpen}
@@ -502,27 +528,52 @@ const Index = () => {
           presetProjectId={selectedProject}
         />
 
-        {/* Mobile Floating Action Button */}
+        {/* Notes Modal */}
+        {notesModalOpen && noteContext && (
+          <NotesModal
+            open={notesModalOpen}
+            onClose={() => { setNotesModalOpen(false); setNoteContext(null); setNotesModalMode("edit"); }}
+            initialDate={noteContext.date}
+            projectId={noteContext.projectId}
+            projectName={noteContext.projectName}
+            viewOnly={notesModalMode === "view"}
+          />
+        )}
+
+        {/* Mobile Floating Action Buttons */}
         {isMobile && (
-          <Button
-            size="lg"
-            className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-[0_8px_16px_rgba(0,0,0,0.12)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.16)] hover:scale-105 active:scale-95 transition-all duration-200 z-50"
-            onClick={() => {
-              // Auto-set date based on current view mode
-              if (viewMode === "today") {
-                const today = getISTDateString();
-                setPresetDate(today);
-              } else if (viewMode === "tomorrow") {
-                const tomorrow = new Date(new Date(getISTDateString()).getTime() + 86400000).toISOString().split("T")[0];
-                setPresetDate(tomorrow);
-              } else {
-                setPresetDate(null);
-              }
-              setIsFormOpen(true);
-            }}
-          >
-            <Plus className="h-7 w-7" />
-          </Button>
+          <>
+            {/* Notes Button */}
+            <Button
+              size="sm"
+              className="fixed bottom-24 right-6 h-12 w-12 rounded-full shadow-[0_8px_16px_rgba(0,0,0,0.12)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.16)] hover:scale-105 active:scale-95 transition-all duration-200 z-50 pop-in-delay-1"
+              variant="outline"
+              onClick={() => handleOpenNotes("edit")}
+            >
+              <FileText className="h-5 w-5" />
+            </Button>
+
+            {/* New Task Button */}
+            <Button
+              size="lg"
+              className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-[0_8px_16px_rgba(0,0,0,0.12)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.16)] hover:scale-105 active:scale-95 transition-all duration-200 z-50 pop-in-delay-2"
+              onClick={() => {
+                // Auto-set date based on current view mode
+                if (viewMode === "today") {
+                  const today = getISTDateString();
+                  setPresetDate(today);
+                } else if (viewMode === "tomorrow") {
+                  const tomorrow = new Date(new Date(getISTDateString()).getTime() + 86400000).toISOString().split("T")[0];
+                  setPresetDate(tomorrow);
+                } else {
+                  setPresetDate(null);
+                }
+                setIsFormOpen(true);
+              }}
+            >
+              <Plus className="h-7 w-7" />
+            </Button>
+          </>
         )}
       </div>
     </div>

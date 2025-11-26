@@ -1,5 +1,5 @@
 import { Task } from "@/types";
-import { CheckCircle2, Circle, Clock, Plus, Calendar } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Plus, Calendar, FileText, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getISTDateString, normalizeDate } from "@/lib/dateUtils";
 
@@ -7,9 +7,11 @@ interface DashboardProps {
   tasks: Task[];
   onAddTaskForDate: (date: string) => void;
   onViewUpcoming?: () => void;
+  onAddNoteForDate?: (date: string) => void;
+  onViewNotesForDate?: (date: string) => void;
 }
 
-export const Dashboard = ({ tasks, onAddTaskForDate, onViewUpcoming }: DashboardProps) => {
+export const Dashboard = ({ tasks, onAddTaskForDate, onViewUpcoming, onAddNoteForDate, onViewNotesForDate }: DashboardProps) => {
   const today = getISTDateString();
   const tomorrow = new Date(new Date(today).getTime() + 86400000).toISOString().split("T")[0];
   
@@ -65,6 +67,16 @@ export const Dashboard = ({ tasks, onAddTaskForDate, onViewUpcoming }: Dashboard
           <Plus className="w-4 h-4 mr-2" />
           Add Task for Today
         </Button>
+        <div className="mt-2 flex gap-2">
+          <Button size="sm" variant="ghost" className="flex-1" onClick={() => onAddNoteForDate?.(today)}>
+            <FileText className="w-4 h-4 mr-2" />
+            Add Note
+          </Button>
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => onViewNotesForDate?.(today)}>
+            <Eye className="w-4 h-4 mr-2" />
+            View Notes
+          </Button>
+        </div>
       </div>
 
       {/* Tomorrow's Tasks Card */}
@@ -102,6 +114,16 @@ export const Dashboard = ({ tasks, onAddTaskForDate, onViewUpcoming }: Dashboard
           <Plus className="w-4 h-4 mr-2" />
           Add Task for Tomorrow
         </Button>
+        <div className="mt-2 flex gap-2">
+          <Button size="sm" variant="ghost" className="flex-1" onClick={() => onAddNoteForDate?.(tomorrow)}>
+            <FileText className="w-4 h-4 mr-2" />
+            Add Note
+          </Button>
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => onViewNotesForDate?.(tomorrow)}>
+            <Eye className="w-4 h-4 mr-2" />
+            View Notes
+          </Button>
+        </div>
       </div>
 
       <div className="bg-card rounded-xl p-6 shadow-soft border border-border">
