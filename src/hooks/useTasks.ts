@@ -27,6 +27,7 @@ export function useTasks() {
         completed: task.completed,
         project_tags: task.project_tags,
         createdAt: task.created_at,
+        order_index: task.order_index,
       })) as Task[];
     },
   });
@@ -146,6 +147,36 @@ export function useTasks() {
     },
   });
 
+  const updateTaskOrder = useMutation({
+    mutationFn: async (taskOrders: { id: string; order_index: number }[]) => {
+      // Fire and forget - update in background without waiting
+      taskOrders.forEach((taskOrder) => {
+        supabase
+          .from("tasks")
+          .update({ order_index: taskOrder.order_index })
+          .eq("id", taskOrder.id)
+          .then(({ error }) => {
+            if (error) console.error("Failed to update task order:", error);
+          });
+      });
+    },
+    onMutate: async (taskOrders) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["tasks"] });
+
+      // Immediately update the UI without waiting for server response
+      queryClient.setQueryData(["tasks"], (old: Task[] | undefined) => {
+        if (!old) return old;
+        
+        const orderMap = new Map(taskOrders.map(t => [t.id, t.order_index]));
+        return old.map(task => ({
+          ...task,
+          order_index: orderMap.get(task.id) ?? task.order_index
+        }));
+      });
+    },
+  });
+
   return {
     tasks,
     isLoading,
@@ -154,5 +185,6 @@ export function useTasks() {
     deleteTask: deleteTask.mutate,
     toggleTask: toggleTask.mutate,
     pinTask: pinTask.mutate,
+    updateTaskOrder: updateTaskOrder.mutate,
   };
 }

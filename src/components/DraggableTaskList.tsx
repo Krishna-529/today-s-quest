@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Task, Project } from "@/types";
 import { DraggableTaskItem } from "./DraggableTaskItem";
 import {
@@ -35,6 +36,12 @@ export const DraggableTaskList = ({
   onReorder,
   projects,
 }: DraggableTaskListProps) => {
+  const [items, setItems] = useState<Task[]>(tasks);
+
+  useEffect(() => {
+    setItems(tasks);
+  }, [tasks]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -49,13 +56,15 @@ export const DraggableTaskList = ({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const oldIndex = tasks.findIndex((t) => t.id === active.id);
-      const newIndex = tasks.findIndex((t) => t.id === over.id);
-      onReorder(arrayMove(tasks, oldIndex, newIndex));
+      const oldIndex = items.findIndex((t) => t.id === active.id);
+      const newIndex = items.findIndex((t) => t.id === over.id);
+      const newOrder = arrayMove(items, oldIndex, newIndex);
+      setItems(newOrder);
+      onReorder(newOrder);
     }
   };
 
-  if (tasks.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">No tasks yet. Create one to get started!</p>
@@ -69,9 +78,9 @@ export const DraggableTaskList = ({
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+      <SortableContext items={items.map((t) => t.id)} strategy={verticalListSortingStrategy}>
         <div className="space-y-3 select-none">
-          {tasks.map((task) => (
+          {items.map((task) => (
             <DraggableTaskItem
               key={task.id}
               task={task}

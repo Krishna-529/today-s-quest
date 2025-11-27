@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
-  const { tasks, isLoading: tasksLoading, addTask, updateTask, deleteTask, toggleTask, pinTask } = useTasks();
+  const { tasks, isLoading: tasksLoading, addTask, updateTask, deleteTask, toggleTask, pinTask, updateTaskOrder } = useTasks();
   const { projects, isLoading: projectsLoading, addProject, deleteProject } = useProjects();
   const { archivePastDueTasks, isArchiving } = useArchivedTasks();
   const isMobile = useIsMobile();
@@ -47,7 +47,6 @@ const Index = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [presetDate, setPresetDate] = useState<string | null>(null);
-  const [taskOrderMap, setTaskOrderMap] = useState<Record<string, string[]>>({});
   const [currentTab, setCurrentTab] = useState<"tasks" | "archived">("tasks");
   const [notesModalOpen, setNotesModalOpen] = useState(false);
   const [notesModalMode, setNotesModalMode] = useState<"edit" | "view">("edit");
@@ -136,26 +135,20 @@ const Index = () => {
       filtered = filtered.filter((task) => !task.completed);
     }
 
-    // Apply manual order if exists for current context
-    const orderKey = selectedProject
-      ? `project:${selectedProject}|${completionFilter}`
-      : `view:${viewMode}|${completionFilter}`;
-    const orderedIds = taskOrderMap[orderKey];
-    if (orderedIds && orderedIds.length) {
-      const indexMap = new Map(orderedIds.map((id, i) => [id, i]));
-      filtered = filtered
-        .slice()
-        .sort((a, b) => {
-          const ia = indexMap.has(a.id) ? (indexMap.get(a.id) as number) : Number.POSITIVE_INFINITY;
-          const ib = indexMap.has(b.id) ? (indexMap.get(b.id) as number) : Number.POSITIVE_INFINITY;
-          return ia - ib;
-        });
-    } else {
-      // Default sort: oldest tasks first (ascending by createdAt)
-      filtered = filtered
-        .slice()
-        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-    }
+    // Sort by order_index if available, otherwise by createdAt
+    filtered = filtered
+      .slice()
+      .sort((a, b) => {
+        // If both have order_index, use that
+        if (a.order_index !== undefined && b.order_index !== undefined) {
+          return a.order_index - b.order_index;
+        }
+        // If only one has order_index, it comes first
+        if (a.order_index !== undefined) return -1;
+        if (b.order_index !== undefined) return 1;
+        // Otherwise sort by createdAt (oldest first)
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      });
 
     // Sort pinned tasks to the top
     filtered = filtered.slice().sort((a, b) => {
@@ -501,10 +494,12 @@ const Index = () => {
                     onDelete={handleDeleteTask}
                     onPin={handlePinTask}
                     onReorder={(newTasks) => {
-                      const key = selectedProject
-                        ? `project:${selectedProject}|${completionFilter}`
-                        : `view:${viewMode}|${completionFilter}`;
-                      setTaskOrderMap((prev) => ({ ...prev, [key]: newTasks.map((t) => t.id) }));
+                      // Update order_index for all tasks in the new order
+                      const taskOrders = newTasks.map((task, index) => ({
+                        id: task.id,
+                        order_index: index,
+                      }));
+                      updateTaskOrder(taskOrders);
                     }}
                     projects={projects}
                   />

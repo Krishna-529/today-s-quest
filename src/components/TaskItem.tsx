@@ -30,7 +30,7 @@ export const TaskItem = ({ task, onToggle, onEdit, onDelete, onPin, projects = [
   return (
     <div
       className={cn(
-        "group bg-card rounded-2xl p-6 shadow-soft border border-border transition-all duration-500 hover:shadow-hover task-enter select-none",
+        "group bg-card rounded-2xl p-6 shadow-soft border border-border transition-all duration-500 hover:shadow-hover select-none",
         task.completed && "opacity-50"
       )}
     >

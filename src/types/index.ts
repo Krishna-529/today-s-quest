@@ -13,6 +13,7 @@ export interface Task {
   completed: boolean;
   project_tags?: string[];
   createdAt: string;
+  order_index?: number;
 }
 
 export interface ArchivedTask {
