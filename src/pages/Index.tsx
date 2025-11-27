@@ -20,6 +20,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -51,6 +61,8 @@ const Index = () => {
   const [notesModalOpen, setNotesModalOpen] = useState(false);
   const [notesModalMode, setNotesModalMode] = useState<"edit" | "view">("edit");
   const [noteContext, setNoteContext] = useState<{ date: string | null; projectId: string | null; projectName: string | null } | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
 
   const resolveNoteContext = () => {
     const today = getISTDateString();
@@ -190,8 +202,17 @@ const Index = () => {
   };
 
   const handleDeleteTask = (id: string) => {
-    deleteTask(id);
-    toast.success("Task deleted");
+    setTaskToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteTask = () => {
+    if (taskToDelete) {
+      deleteTask(taskToDelete);
+      toast.success("Task deleted");
+    }
+    setDeleteConfirmOpen(false);
+    setTaskToDelete(null);
   };
 
   const handleToggleTask = (id: string) => {
@@ -570,6 +591,23 @@ const Index = () => {
             </Button>
           </>
         )}
+
+        <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Task</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this task? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setTaskToDelete(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDeleteTask} className="bg-destructive hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

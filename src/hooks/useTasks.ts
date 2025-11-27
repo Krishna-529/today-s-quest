@@ -37,6 +37,16 @@ export function useTasks() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Get the highest order_index to add new task at the bottom
+      const { data: maxOrderTask } = await supabase
+        .from("tasks")
+        .select("order_index")
+        .order("order_index", { ascending: false, nullsFirst: false })
+        .limit(1)
+        .single();
+
+      const nextOrderIndex = (maxOrderTask?.order_index ?? -1) + 1;
+
       const { error } = await supabase.from("tasks").insert({
         user_id: user.id,
         title: taskData.title!,
@@ -44,6 +54,7 @@ export function useTasks() {
         due_date: taskData.dueDate,
         priority: taskData.priority || "medium",
         project_tags: taskData.project_tags || [],
+        order_index: nextOrderIndex,
       });
 
       if (error) throw error;
